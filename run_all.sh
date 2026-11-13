@@ -11,8 +11,10 @@ MAIN="${MAIN_MODEL:-yolo11n_raspberry_executorch_optimized}"      # the model th
 OUT="${OUT:-out}"
 
 FAILED=""
+# MODELS="a b" limits the run (e.g. to approved models); default = every .pte in bundle/models
 for pte in bundle/models/*.pte; do
   name="$(basename "$pte" .pte)"
+  [ -z "${MODELS:-}" ] || case " $MODELS " in *" $name "*) ;; *) continue;; esac
   echo; echo "=== $name ==="
   if ! $PY main.py --source "$SRC" --model "$pte" --out "$OUT/$name" --blur "$@"; then
     echo "!! $name failed on this board, skipping"; FAILED="$FAILED $name"; rm -f "$OUT/$name/summary.json"
