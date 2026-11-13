@@ -1,5 +1,7 @@
 .venv/
+.venv-pi/
 __pycache__/
 *.pt
 out_test/
 build/*.pdf
+bundle/wheels/

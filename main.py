@@ -11,9 +11,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from ultralytics import YOLO
-
-import insights, stamp
+import insights, runner, stamp
 
 KEEP = ["person", "car", "bus", "truck", "motorcycle", "bicycle"]
 IMG = {".jpg", ".jpeg", ".png", ".bmp"}
@@ -23,7 +21,9 @@ COLUMNS = ["frame", "t_s", "person", "car", "bus", "truck", "motorcycle", "bicyc
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--source", required=True, help="image folder or video file")
-ap.add_argument("--model", default="models/yolo11n_executorch_model")
+ap.add_argument("--model", default="bundle/models/yolo11n_raspberry_executorch_optimized.pte",
+                help=".pte file (Arm INT8/FP32 via ExecuTorch) or an Ultralytics export dir")
+ap.add_argument("--backend", choices=["auto", "et", "ultralytics"], default="auto")
 ap.add_argument("--out", default="out")
 ap.add_argument("--conf", type=float, default=0.30)
 ap.add_argument("--every", type=int, default=1, help="video: use every Nth frame")
@@ -36,7 +36,7 @@ a = ap.parse_args()
 
 src = Path(a.source)
 out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
-model = YOLO(a.model, task="detect")
+det = runner.load(a.model, a.backend)
 
 
 def frames():
@@ -55,14 +55,9 @@ def frames():
         i += 1
 
 
-def detect(img, classes=None):
-    r = model.predict(img, imgsz=640, conf=a.conf, verbose=False, classes=classes)[0]
-    dets = []
-    for b, c, s in zip(r.boxes.xyxy.tolist(), r.boxes.cls.tolist(), r.boxes.conf.tolist()):
-        n = r.names[int(c)]
-        if n in KEEP:
-            dets.append((n, s, tuple(b)))
-    return dets, r.speed["inference"]
+def detect(img):
+    dets, ms = det.detect(img, a.conf)
+    return [d for d in dets if d[0] in KEEP], ms
 
 
 def tiled_people(img):
@@ -71,9 +66,8 @@ def tiled_people(img):
     boxes, scores = [], []
     for x0 in (0, w - tw):
         for y0 in (0, h - th):
-            r = model.predict(img[y0:y0 + th, x0:x0 + tw], imgsz=640, conf=a.conf, classes=[0],
-                              verbose=False)[0]
-            for b, s in zip(r.boxes.xyxy.tolist(), r.boxes.conf.tolist()):
+            d, _ = det.detect(img[y0:y0 + th, x0:x0 + tw], a.conf, only_person=True)
+            for _, s, b in d:
                 boxes.append([b[0] + x0, b[1] + y0, b[2] - b[0], b[3] - b[1]]); scores.append(s)
     if not boxes:
         return 0
