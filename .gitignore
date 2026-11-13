@@ -8,3 +8,4 @@ bundle/wheels/
 .venv-twin/
 test_media/
 zone_grid.jpg
+devset/cache/
