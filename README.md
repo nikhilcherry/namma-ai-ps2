@@ -49,6 +49,7 @@ _Filled on the day from `handcount/accuracy.md`._
 | `yolo11n_raspberry_executorch_optimized.pte` | YOLO11n INT8, 640 input, 4.7 MB | Arm (`Arm/yolo11n-int8-xnnpack-executorch-raspberrypi5`) |
 | `yolo11n_raspberry_executorch_original.pte` | YOLO11n FP32, 640 input, 10.2 MB | Arm, same export |
 | `yolo11n_fp32_480.pte`, `yolo11n_fp32_320.pte` | YOLO11n FP32 at smaller inputs | our export with Ultralytics, ExecuTorch/XNNPACK |
+| `yolo11n_fp32_960.pte`, `yolo11s_fp32_640.pte`, `yolo11m_fp32_640.pte` | larger input / larger models for the accurate profile (s and m need organiser approval before use for submitted counts) | our export with Ultralytics |
 
 Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK backend, CPU only.
 `runner.py` is a thin runner (no Ultralytics on the Pi) and reads the input size from the `.pte`.
@@ -58,7 +59,7 @@ Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK b
 - **Traffic level:** share of the road zone covered by vehicle boxes: FREE < 25%, BUSY < 50%, JAMMED above.
 - **Pedestrians on the road:** people whose foot point is inside the zone, excluding riders (a person box mostly inside a two-wheeler box).
 - **Privacy:** the top quarter of every detected person box is blurred in saved frames (default; `--no-blur` disables); `--deploy` saves no frames.
-- **Integrity:** every CSV row is hash-chained with the model and input hashes (`stamp.json`).
+- **Integrity:** every CSV row is hash-chained with the model and input hashes (`stamp.json`). This detects accidental or partial edits; it is not a signature, because whoever edits the CSV can rebuild the chain. The commit that publishes `stamp.json` head is the anchor.
 
 ## Limits
 - Counts are per frame, not unique people or vehicles.
