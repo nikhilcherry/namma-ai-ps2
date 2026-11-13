@@ -1,0 +1,26 @@
+# RULE (do not change after counting starts): count every person and every vehicle (car, bus, truck, auto, two-wheeler, bicycle) that is at least half visible and taller than 2% of the frame height. A rider is a person AND a vehicle.
+frame,person,vehicle,split
+c00,,,tune
+c01,,,check
+c02,,,check
+c03,,,check
+c04,,,check
+c05,,,tune
+c06,,,tune
+c07,,,tune
+c08,,,tune
+c09,,,tune
+c10,,,check
+c11,,,tune
+c12,,,check
+c13,,,tune
+v_00,,,tune
+v_01,,,tune
+v_02,,,tune
+v_03,,,check
+v_04,,,tune
+v_05,,,tune
+v_06,,,check
+v_07,,,tune
+v_08,,,tune
+v_09,,,tune

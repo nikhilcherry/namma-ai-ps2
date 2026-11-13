@@ -118,9 +118,14 @@ def main():
 
     names = [p.stem for p in frames]
     proxy = None
+    trows = []
     if Path(a.truth).exists():
-        truth = {r["frame"]: (int(r["person"]), int(r["vehicle"]), r["split"])
-                 for r in csv.DictReader(l for l in open(a.truth) if not l.startswith("#"))}
+        trows = [r for r in csv.DictReader(l for l in open(a.truth) if not l.startswith("#"))
+                 if r["person"].strip() != "" and r["vehicle"].strip() != ""]
+        if not trows:
+            print("devset/truth.csv has no counts yet -> PROXY mode")
+    if trows:
+        truth = {r["frame"]: (int(r["person"]), int(r["vehicle"]), r["split"]) for r in trows}
         tune = [f for f in truth if truth[f][2] == "tune"]
         check = [f for f in truth if truth[f][2] == "check"]
         truth = {f: truth[f][:2] for f in truth}
