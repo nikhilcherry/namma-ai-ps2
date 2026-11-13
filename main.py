@@ -5,7 +5,7 @@ small box-maths add-ons (congestion, crowd level, pedestrians on road, head blur
   python main.py --source clip.mp4 --every 3        video, every 3rd frame
   python main.py --source clip.mp4 --zones zones.json --deploy   CSV only, no frames saved
 """
-import argparse, csv, json, platform, resource, statistics, time
+import argparse, csv, itertools, json, platform, resource, statistics, time
 from collections import deque
 from pathlib import Path
 
@@ -74,11 +74,13 @@ def tiled_people(img):
     return len(cv2.dnn.NMSBoxes(boxes, scores, a.conf, 0.5))
 
 
-files = list(frames())
-if not files:
-    raise SystemExit(f"no frames found in {src}")
 is_video = not src.is_dir()
-detect(files[0][2])  # warm-up, not timed
+files = frames()            # streamed: a 20 s 1080p clip held in memory would not fit on a Pi
+first = next(files, None)
+if first is None:
+    raise SystemExit(f"no frames found in {src}")
+detect(first[2])  # warm-up, not timed
+files = itertools.chain([first], files)
 times, e2e, rows, occ_hist, alldets = [], [], [], deque(maxlen=5), {}
 for name, t, img in files:
     t0 = time.perf_counter()
