@@ -74,3 +74,19 @@ Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK b
 - Small or half-hidden people are missed; `--tile auto` helps at 4x the inference time.
 
 Models are AGPL-3.0 (Ultralytics / Arm). Sample photos: Wikimedia Commons, credits in `img/raw/meta.json`.
+
+## Profiles, flags and tools added by the efficiency pass (see EFFICIENCY_PLAN.md, devset/FINDINGS.md)
+
+| `--profile` | recipe | laptop ms/frame |
+|---|---|---|
+| `fast` | Arm INT8 640, no images, skips unchanged frames (`--skip-static 0.5`) | ~90 when inferring |
+| `balanced` | yolo11n FP32 960, one pass, smoothing | ~110 |
+| `ensemble` | yolo11n 960 + yolo11s 640 (`--also`), merged before NMS | ~225 |
+| `accurate` | yolo11n FP32 640, full frame + 4 tiles, all classes, smoothing | ~450 |
+
+Post-processing flags: `--conf-person`, `--conf-vehicle`, `--iou`, `--min-h`, `--ungrouped` (old per-class NMS), optional `count` polygon in `zones.json`.
+Counts per recipe are measured against a *proxy* reference until `devset/truth.csv` is filled in; nothing here is an accuracy claim.
+
+Tools: `tools/sweep.py` (threshold/NMS sweep), `tools/hybrid_eval.py` (recipe comparison), `tools/quantize.py` (own INT8, `--fp32-head`),
+`tools/bench_hygiene.py` (>=100 frames, two runs, throttle flag), `tools/pi_check.sh` (board readiness), `tools/profile_diff.py`, `tools/devset_init.py`.
+Tests: `python tests/test_postprocess.py` and `python tests/test_samples_golden.py` (or `pytest tests`).
