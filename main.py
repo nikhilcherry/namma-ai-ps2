@@ -289,4 +289,4 @@ except OSError:
     "e2e_ms": round(me, 1), "fps_e2e": round(1000 / me, 2), "stage_share_pct": shares,
     "peak_ram_mb": round(peak_mb),
     "people_total": sum(r["person"] for r in rows), "vehicle_total": sum(r["vehicle"] for r in rows),
-    "source": str(a.source), "every": a.every, "python": platform.python_version()}, indent=1))
+    "zones": bool(a.zones and Path(a.zones).exists()), "source": str(a.source), "every": a.every, "python": platform.python_version()}, indent=1))

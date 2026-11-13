@@ -44,6 +44,7 @@ if a.story == "gate":
     title = "Does this gate need a traffic marshal?"
     need = addons and max(ped) >= 5 and busy >= 0.30
     verdict = ("Marshal recommended for this window" if need else "No marshal needed on this evidence")
+    if not S.get("zones"): verdict = "Provisional: " + verdict + " (road zone not calibrated)"
     rule = "Rule: recommend a marshal when 5 or more pedestrians are on the road in any frame AND traffic is BUSY or JAMMED in at least 30% of frames."
     why = (f"Peak of {max(ped)} pedestrians on the carriageway at {where(pp)}; traffic was BUSY or JAMMED in "
            f"{busy:.0%} of frames." if addons else "Add-ons were off, so there is no on-road count.")
@@ -54,6 +55,7 @@ else:
     title = "Is this junction keeping up with its traffic?"
     need = addons and busy >= 0.50
     verdict = ("Review the signal timing for this approach" if need else "Signal timing looks adequate on this evidence")
+    if not S.get("zones"): verdict = "Provisional: " + verdict + " (road zone not calibrated)"
     rule = "Rule: flag the approach when traffic is BUSY or JAMMED in at least 50% of frames."
     why = (f"Traffic was BUSY or JAMMED in {busy:.0%} of frames ({lv['JAMMED']} JAMMED); peak of {max(veh)} vehicles in view at {where(pv)}."
            if addons else "Add-ons were off, so there is no congestion level.")
