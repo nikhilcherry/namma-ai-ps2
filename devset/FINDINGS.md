@@ -42,3 +42,17 @@ because the reference is more permissive; that is circular. Run `python tools/sw
 * `--profile balanced` = one 960 pass + smoothing. Careful: on `signal_06` it counts 0 people where the 640 run counts 1.
 * Pi day: `bash tools/pi_check.sh --perf` (M1), `python tools/bench_hygiene.py --frames devset/frames --all` (M5, two runs per model, flags >10% drift).
 * x86 laptop: INT8 (~115 ms) is slower than FP32 (~79 ms) here, so INT8 gains must be measured on the Pi, not assumed.
+
+## T9: own INT8 at 480 (`tools/quantize.py`, PT2E + XNNPACKQuantizer, calibrated on the 24 dev frames)
+Proxy-reference error on the 8 check frames, legacy setting (conf 0.30, IoU 0.7), mean abs people / vehicles:
+| model | people | vehicles | note |
+|---|---|---|---|
+| yolo11n_fp32_480 | 1.00 | 0.75 | reference point |
+| yolo11n_int8_480 (everything quantized) | **2.25** | 1.25 | scores collapse; the sweep can only pick conf 0.5 |
+| yolo11n_int8h_480 (Detect head left FP32) | 1.12 | 0.62 | `--fp32-head`; strips quantizer annotations from the head nodes (XNNPACKQuantizer refuses a `None` config) |
+
+* The FP32 head is what makes it work, as Arm's model card says. Both files load and run on the 1.1.0 twin runtime although exported with 1.6.
+* Verdict by the plan's rule ("keep only if clearly better than FP32 at 480"): **not clearly better on accuracy** (about equal). Whether it is faster is a Pi question: laptop timings were swamped by other processes (run-to-run 36 vs 85 ms for the same file), and x86 INT8 was slower than FP32 earlier. `yolo11n_int8h_480.pte` stays in bundle/models so `run_all.sh` and `bench_hygiene.py` time it on the board; drop it if it is not faster there.
+* `yolo11n_int8_480.pte` (no FP32 head) is kept only as the negative result; delete before the submission bundle.
+* 960 + tiling hybrid: not built. 960 with tiles over-counted crowds (45 vs 24 on Majestic) because tile and full-frame boxes of different scale survive NMS; the cheaper 960 single pass already captures most of the gain.
+* Vehicles: yolo11s full frame had the lowest vehicle error of the small models in the proxy sweep (0.6 vs 1.1-1.4 for n); a real answer needs truth.csv.
