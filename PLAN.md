@@ -107,11 +107,14 @@ Each pass: `bundle/install_pi.sh`, then `run_all.sh` on two sample photos (four 
 |---|---|---|---|---|---|---|---|
 | 1 | `python:3.11-slim-bookworm` (Pi OS Bookworm case) | offline wheels | `00c24c2` | pass | pass | written | 2 of 3 pass, see below |
 | 2 | `python:3.13-slim-trixie` | offline wheels | `4020b80` | pass | pass | written | 2 of 3 pass, see below |
-| 3 | `python:3.11-slim-bookworm` | online (empty `bundle/wheels/`) | `659ef75` | PASS3_INSTALL | PASS3_RUN | PASS3_REPORT | PASS3_TESTS |
+| 3 | `python:3.11-slim-bookworm` | online (empty `bundle/wheels/`) | `659ef75` | **not finished**: the download under QEMU was still running after 60 minutes and was stopped; no error seen | not run | not run | not run |
 
 - The failing test was `tests/test_samples_golden.py`: it pins the laptop's counts, and on ARM64 the INT8 model counted 4 people on
   `junction_01` instead of 5. Quantized kernels differ per architecture. The test is now x86-only (`b622b7d`); the lesson is that
   Pi counts can differ from laptop counts by about one per frame on INT8.
+- In place of pass 3: a native check that the online path (`pip` with the pinned list and the PyTorch CPU index) resolves, for
+  Python 3.11 and for 3.13, to 18 wheels that are byte-identical (SHA-256) to the ones in the offline bundle that passed passes 1 and 2.
+  So the online install puts the same files on the Pi; the only untested part is the download itself on the venue network.
 - Not rehearsed on ARM: `--profile crowd` and `crowd-lite` (added after passes 1 and 2 started), Python 3.12, PDF output (no browser in the containers).
 - An earlier rehearsal (13 Nov) found `networkx 3.7` refusing Python 3.11; a 3.11-compatible build is in the bundle.
 - QEMU timings mean nothing and are not recorded.

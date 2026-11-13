@@ -1,65 +1,38 @@
-# What is still open (updated 14 Nov, 00:20, at commit `2bec6c0`)
+# What is still open (updated 14 Nov, 02:30)
 
-Tomorrow the team follows **`docs/DAY.md`** and nothing else. This file is for whoever (agent or
-person) continues tonight.
+Tomorrow the team follows **`docs/DAY.md`** and nothing else. Agent work for tonight is finished.
 
-**Rule: no new features, flags, profiles or tools.** Only the items below.
-
-## Done tonight
+## Done overnight
 | Item | Result |
 |---|---|
-| Default run shortened | `run_all.sh` runs four YOLO11n models + `fast` and `accurate` profiles; prints wall time. Laptop: 264 s for the 54 s test clip at `--every 3` |
-| Report from a profile | `MAIN_MODEL=profile_accurate bash run_all.sh ...` (tested on the sample photos) |
-| README protected | the Pi table is filled only on a real Pi (or `FILL_README=1`) |
-| Bundle slimmed | `yolo11n_int8_480.pte` deleted; `yolo11m_fp32_640.pte` untracked (laptop only, still used by `tools/sweep.py --proxy`). Tracked models: 86 MB |
-| Docs in line | `docs/DAY.md` rewritten as the single runbook; status table in `EFFICIENCY_PLAN.md`; pitch and form answers match the profiles |
-| Dev-set hand count | **dropped on purpose.** Accuracy comes from 10 frames of the organiser's clip, default thresholds, no tuning (`docs/DAY.md` step 7) |
+| Default run shortened | four YOLO11n models + `fast` and `accurate`; wall time printed. Laptop: 264 s for the 54 s test clip at `--every 3` |
+| Report from a profile | `MAIN_MODEL=profile_accurate` (or `profile_crowd`, `profile_lite`) |
+| README protected | Pi table filled only on a real Pi |
+| Bundle slimmed | failed INT8 480 deleted, 77 MB medium model laptop-only. Tracked models 86 MB |
+| Docs in line | `docs/DAY.md` is the single runbook |
+| Crowd problem | `--profile crowd` (17 passes): Majestic sample 25 → 58 people. `--profile crowd-lite` (guided tiles): 51 people at under half the time |
+| Paper ideas | five tried; two in, three rejected or evidence-only. Table in `devset/FINDINGS.md` |
+| ARM64 rehearsal | offline install + full run pass on Python 3.11 and 3.13. Online install: same 18 files as the offline bundle (checked by hash). Details at the end of `PLAN.md` |
 
-## 1. In progress: ARM64 rehearsal on the new code (machine only)
-Running in the background since about 00:05. Three passes under QEMU, 10–15 minutes each:
+## Known and accepted
+- **Dense crowds are still undercounted.** A crowd-trained model found 97 people on the Majestic photo where ours finds 58. That model is third-party, s-size, ONNX and not approved, so it is evidence, not something to ship. Say this limit out loud.
+- **Buses seen from above are mostly missed** by YOLO11n (2 found in a depot).
+- **INT8 counts differ by about one per frame between laptop and ARM.** Only Pi counts go in the submission.
+- `crowd` and `crowd-lite` were added after the ARM rehearsal started and have not been run on ARM. They use the same model file and code path as `accurate`, with more tiles.
+- Nothing has been compared with a human count, and nothing has run on a real Pi.
 
-| Pass | Container | Install path |
-|---|---|---|
-| 1 | `python:3.11-slim-bookworm` | offline (`bundle/wheels/` copied in) |
-| 2 | `python:3.13-slim-trixie` | offline |
-| 3 | `python:3.11-slim-bookworm` | online (empty `bundle/wheels/`, what a plain `git clone` at the venue does; never run before) |
-
-- Script: `/tmp/claude-1000/-home-nikhil/8b970b16-761c-4eb3-aeee-a9d8d7907681/scratchpad/rehearse.sh <tag> <offline|online>`
-- Log: `/tmp/claude-1000/-home-nikhil/8b970b16-761c-4eb3-aeee-a9d8d7907681/scratchpad/arm3.log` (ends with the line `finished`)
-- Each pass runs `bundle/install_pi.sh`, `run_all.sh` on two sample photos (four models + two profiles), then the tests.
-- Docker needs `--context default` on this laptop.
-
-**When it finishes:**
-1. A pass is good when the log shows `imports OK`, six `===` blocks with no `!!` line, a `DONE.` line, and the tests print `ok`.
-2. Replace the "Rehearsal results" block at the end of `PLAN.md` with the three results and the commit they ran on. Say that QEMU timings mean nothing.
-3. If a pass fails: fix only that failure, re-run only that pass, record both the failure and the fix.
-4. Pass 1 copied the code at commit `00c24c2`; passes 2 and 3 copy the working tree when they start, so they include the later `run_all.sh` change (`MAIN_MODEL` as a profile). If pass 1 is the only one on the old code and it passed, that is fine: note it.
-5. Commit and push (`git pull --rebase` first; a second agent has been committing to `master`).
-
-## 2. Small checks an agent can still do tonight
-| # | What | Done when |
-|---|---|---|
-| 2a | Read `docs/DAY.md` top to bottom and run every command in it on the laptop against `test_media/traffic.mp4` (use `PY=.venv-twin/bin/python OUT=out_test/day`) | every command runs; any that does not is fixed in `docs/DAY.md` (the doc, not the code, unless the code is wrong) |
-| 2b | `git status` is clean after 2a | no stray `deliverables/`, no modified `README.md` |
-| 2c | CI is green on the last commit | `gh run list -L 1` |
-
-Do not go beyond these.
-
-## 3. Needs a person (tomorrow morning is fine)
+## Needs a person (tomorrow morning)
 | # | What |
 |---|---|
-| 3a | Team names in `PLAN.md` and `docs/submission.md` |
-| 3b | The two opening lines in `docs/pitch.md` are unsourced (marked in the file): find a source or ask a mentor |
-| 3c | Read `docs/DAY.md` once; read one pitch script aloud with a timer |
-| 3d | Approach PDF: section order, board price, end-to-end FPS, an accuracy line (3 of the listed fixes were done in `63496e7`) |
-| 3e | Test `tools/live.py` from a real phone if the live demo is wanted |
+| 1 | Team names in `PLAN.md` and `docs/submission.md` |
+| 2 | The two opening lines in `docs/pitch.md` are unsourced (marked in the file) |
+| 3 | Read `docs/DAY.md` once; read one pitch script aloud with a timer |
+| 4 | Approach PDF: section order, board price, end-to-end FPS, an accuracy line |
+| 5 | Test `tools/live.py` from a real phone if the live demo is wanted |
 
-## 4. At the venue
-All in `docs/DAY.md`. The questions to ask first: what judges weigh, whether a live demo is allowed,
-whether YOLO11s/m are allowed, and whether the Pi's OS is 64-bit.
+## At the venue
+All in `docs/DAY.md`. Ask first: what judges weigh, whether a live demo is allowed, whether YOLO11s/m are allowed, whether the Pi's OS is 64-bit.
 
-## Still unknown
-- Any timing on a real Pi, and which Pi it is.
-- Real accuracy: nothing has been compared with a human count yet.
-- Whether a phone can reach the Pi on the venue network.
-- Whether Arm's reference used one thread (a repo note says so; not verified). `tools/pi_check.sh` prints the thread count.
+## If an agent continues
+No new features. The only useful agent job left is walking through `docs/DAY.md` on the laptop against `test_media/traffic.mp4`
+(`PY=.venv-twin/bin/python OUT=out_test/day`) and fixing the doc wherever a command does not work.
