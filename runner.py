@@ -38,6 +38,24 @@ def postprocess(cand, conf_person=0.30, conf_vehicle=0.30, iou=0.7, grouped=Fals
             for i in np.array(idx).flatten()]
 
 
+def set_threads(n):
+    """Ask ExecuTorch for n CPU threads. The documented call is C++ (_unsafe_reset_threadpool); whether this Python
+    build exposes it is unverified, so every known spelling is tried and the outcome is returned as text.
+    Untested on device. Fallback that always works: `taskset -c 0-<n-1> python main.py ...` (tools/thread_sweep.sh)."""
+    for modname in ("executorch.extension.pybindings.portable_lib", "executorch.extension.pybindings._portable_lib",
+                    "executorch.extension.pybindings.pybindings", "executorch.extension.threadpool"):
+        try:
+            mod = __import__(modname, fromlist=["x"])
+        except Exception:
+            continue
+        for fn in ("_unsafe_reset_threadpool", "set_threadpool_size", "set_num_threads"):
+            f = getattr(mod, fn, None)
+            if f:
+                f(int(n))
+                return f"{modname}.{fn}({n})"
+    return "no Python threadpool binding found in this executorch build; use taskset (tools/thread_sweep.sh)"
+
+
 class ExecutorchDetector:
     """YOLO11 .pte (INT8 or FP32): input [1,3,S,S] in 0..1, output [1,84,N]. S is read from the file."""
 

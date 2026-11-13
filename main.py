@@ -53,6 +53,8 @@ ap.add_argument("--iou", type=float, default=0.70, help="NMS IoU")
 ap.add_argument("--ungrouped", action="store_true", help="NMS per class instead of per group (old behaviour)")
 ap.add_argument("--min-h", type=float, default=0.0, help="drop boxes shorter than this share of frame height")
 ap.add_argument("--every", type=int, default=1, help="video: use every Nth frame")
+ap.add_argument("--threads", type=int, default=0,
+                help="ExecuTorch CPU threads (0 = runtime default = all cores; Arm's reference used 1). Untested on device")
 ap.add_argument("--repeat", type=int, default=1,
                 help="image folder: run inference N times over the folder for timing only (rows and counts are written once)")
 ap.add_argument("--zones", default=None, help="JSON with a normalised 'road' polygon, optional 'count' polygon")
@@ -76,6 +78,9 @@ GROUPED = not a.ungrouped
 
 src = Path(a.source)
 out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
+THREADS_NOTE = runner.set_threads(a.threads) if a.threads else "default"
+if a.threads:
+    print("threads:", THREADS_NOTE)
 det = runner.load(a.model, a.backend)
 det2 = runner.load(a.also, a.backend) if a.also else None
 is_video = not src.is_dir()
@@ -326,6 +331,6 @@ except OSError:
     "e2e_ms": round(me, 1), "fps_e2e": round(1000 / me, 2), "stage_share_pct": shares,
     "peak_ram_mb": round(peak_mb),
     "people_total": sum(r["person"] for r in rows), "vehicle_total": sum(r["vehicle"] for r in rows),
-    "repeat": a.repeat, "samples": len(times), "pi_start": PI0, "pi_end": PI1,
+    "repeat": a.repeat, "threads": a.threads, "threads_note": THREADS_NOTE, "samples": len(times), "pi_start": PI0, "pi_end": PI1,
     "throttled_during_run": bool(PI1 and (PI1["throttled"] != "0x0" or (PI0 and PI0["throttled"] != PI1["throttled"]))),
     "zones": bool(a.zones and Path(a.zones).exists()), "source": str(a.source), "every": a.every, "python": platform.python_version()}, indent=1))
