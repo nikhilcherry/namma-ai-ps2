@@ -1,0 +1,8 @@
+arterial_05   person=6   vehicle=7    32.9 ms
+brigade_03    person=13  vehicle=2    59.3 ms
+egipura_02    person=6   vehicle=5    30.8 ms
+junction_01   person=4   vehicle=10   39.8 ms
+majestic_04   person=12  vehicle=0    32.5 ms
+signal_06     person=1   vehicle=7    33.3 ms
+────────────────────────────────────────────
+frames=6  mean=38.1 ms  thru≈26.2 img/s  model=10.2 MB

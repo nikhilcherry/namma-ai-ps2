@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PS2 Approach and Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  :root{
+    --ink:#1c1b19; --soft:#5d5a53; --faint:#8c887e; --rule:#d9d4c7;
+    --paper:#fbf9f4; --amber:#d9900f; --amber-bg:#f6ead2;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ background:var(--paper); }
+  body{ font-family:"Newsreader",Georgia,serif; color:var(--ink); font-size:10.3pt; line-height:1.45;
+        -webkit-print-color-adjust:exact; print-color-adjust:exact; font-optical-sizing:auto; }
+  .page{ width:210mm; height:297mm; padding:15mm 17mm 13mm; position:relative; overflow:hidden;
+         page-break-after:always; display:flex; flex-direction:column; }
+  .page:last-child{ page-break-after:auto; }
+
+  .run{ display:flex; justify-content:space-between; font:500 7.4pt/1 "IBM Plex Sans",sans-serif;
+        letter-spacing:.09em; text-transform:uppercase; color:var(--soft);
+        padding-bottom:3mm; border-bottom:.6pt solid var(--ink); }
+  .foot{ margin-top:auto; display:flex; justify-content:space-between; font:400 7.2pt "IBM Plex Mono",monospace;
+         color:var(--faint); padding-top:3mm; border-top:.5pt solid var(--rule); }
+
+  .kicker{ font:600 7.6pt "IBM Plex Sans",sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--amber); margin-top:7mm; }
+  h1{ font-weight:500; font-size:29pt; line-height:1.04; letter-spacing:-.012em; margin-top:2.5mm; max-width:160mm; }
+  .dek{ font-size:12.4pt; line-height:1.4; color:var(--soft); margin-top:3.5mm; max-width:150mm; font-style:italic; }
+
+  h2{ font:600 8pt "IBM Plex Sans",sans-serif; letter-spacing:.11em; text-transform:uppercase;
+      margin:6.5mm 0 2.2mm; display:flex; gap:3mm; align-items:baseline; }
+  h2 .n{ font-family:"IBM Plex Mono",monospace; font-weight:500; color:var(--amber); }
+  h3{ font-weight:600; font-size:11.2pt; margin:0 0 1mm; }
+  p + p{ margin-top:2mm; }
+  .lede::first-letter{ float:left; font-size:33pt; line-height:.86; padding:1.2mm 1.6mm 0 0; font-weight:500; }
+
+  figure{ margin-top:5mm; }
+  figure img{ width:100%; display:block; }
+  figcaption{ font:400 7.9pt/1.45 "IBM Plex Sans",sans-serif; color:var(--soft); margin-top:1.8mm; }
+  figcaption b{ color:var(--ink); font-weight:600; }
+
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:7mm; }
+  .mono{ font-family:"IBM Plex Mono",monospace; font-size:.9em; }
+
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); border-top:.6pt solid var(--ink); border-bottom:.6pt solid var(--ink); margin-top:3mm; }
+  .stat{ padding:3mm 3mm 2.6mm 0; }
+  .stat + .stat{ padding-left:3.5mm; border-left:.5pt solid var(--rule); }
+  .stat .v{ font:500 19pt/1 "IBM Plex Mono",monospace; letter-spacing:-.02em; }
+  .stat .v small{ font-size:9pt; color:var(--soft); margin-left:.6mm; }
+  .stat .k{ font:400 7.6pt/1.3 "IBM Plex Sans",sans-serif; color:var(--soft); margin-top:1.6mm; }
+
+  table{ width:100%; border-collapse:collapse; font:400 8.4pt/1.35 "IBM Plex Sans",sans-serif; margin-top:3mm; }
+  th{ text-align:left; font-weight:600; font-size:7.2pt; letter-spacing:.07em; text-transform:uppercase; color:var(--soft);
+      border-bottom:.6pt solid var(--ink); padding:0 2mm 1.6mm 0; }
+  td{ padding:1.7mm 2mm 1.7mm 0; border-bottom:.4pt solid var(--rule); vertical-align:top; }
+  td.r, th.r{ text-align:right; font-family:"IBM Plex Mono",monospace; }
+  th.r{ font-family:"IBM Plex Sans",sans-serif; }
+  tr.tot td{ border-bottom:.6pt solid var(--ink); font-weight:600; }
+  .note{ font:400 7.8pt/1.45 "IBM Plex Sans",sans-serif; color:var(--soft); margin-top:2mm; }
+
+  .pipe{ margin-top:3mm; }
+  .pair{ display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
+  .pair img{ height:52mm; object-fit:cover; }
+
+  .finding{ display:grid; grid-template-columns:88mm 1fr; gap:6mm; margin-top:4mm; align-items:start; }
+  .finding .imgs{ display:grid; gap:1.5mm; }
+  .finding .imgs.two{ grid-template-columns:1fr 1fr; }
+  .finding img{ width:100%; display:block; }
+  .tag{ font:500 7pt "IBM Plex Mono",monospace; color:var(--soft); margin-top:1mm; }
+  .callout{ background:var(--amber-bg); padding:2.4mm 3mm; margin-top:2.4mm; font-size:9.8pt; border-left:1.6pt solid var(--amber); }
+
+  ol.plan{ list-style:none; counter-reset:s; margin-top:2mm; }
+  ol.plan li{ counter-increment:s; display:grid; grid-template-columns:9mm 1fr; padding:2mm 0; border-bottom:.4pt solid var(--rule); }
+  ol.plan li::before{ content:counter(s,decimal-leading-zero); font:500 9pt "IBM Plex Mono",monospace; color:var(--amber); padding-top:.5mm; }
+  ol.plan b{ font-weight:600; }
+
+  .check td:first-child{ width:62mm; }
+  .term{ font:400 8.6pt/1.6 "IBM Plex Mono",monospace; background:#1f1e1b; color:#ece6d8; padding:4mm 5mm; margin-top:3mm; white-space:pre; }
+  .term .p{ color:#e7a73a; }
+  .credits{ margin-top:auto; padding-top:6mm; font:400 6.8pt/1.5 "IBM Plex Sans",sans-serif; color:var(--faint); margin-top:4mm; columns:2; column-gap:6mm; }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 ============ -->
+<section class="page">
+  <div class="run"><span>Namma AI Hackathon · CoE-IoT</span><span>Problem Statement 2 · Approach &amp; Plan</span></div>
+
+  <div class="kicker">Public safety · Edge AI · Computer vision</div>
+  <h1>Counting a Bengaluru junction on a five-thousand-rupee computer</h1>
+  <p class="dek" style="max-width:165mm">An offline object-detection and counting PoC on Raspberry Pi with ExecuTorch. It counts pedestrians and vehicles in short clips without sending a single frame to the cloud.</p>
+
+  <figure>
+    <img src="../img/out/c06_det.jpg" alt="" style="height:74mm;object-fit:cover;object-position:50% 64%">
+    <figcaption><b>Fig. 1.</b> A real junction photo run through our exported <span class="mono">model.pte</span> on the ExecuTorch runtime, before the event. The model counted 14 objects: 5 cars, 3 trucks, 2 motorcycles and 4 people. Two of those “trucks” are auto-rickshaws, which COCO has no class for. §4 covers how we handle that.</figcaption>
+  </figure>
+
+  <h2><span class="n">01</span>The problem</h2>
+  <div class="cols">
+    <p class="lede">Most junctions, school gates and bus stands in our cities have no numbers attached to them. Nobody records how many people cross at 8:40 a.m. or how long the two-wheeler queue gets before the signal turns. The usual answer is a CCTV network with a control room or a cloud video service. That is too expensive for a ward office or a school, and it means moving footage of ordinary people off-site.</p>
+    <p>Counting is the useful part, not watching. A cheap device that runs locally and turns video into “23 people, 11 vehicles at 08:40” gives planners and traffic police the data they need. It needs no internet connection and stores no faces.</p>
+  </div>
+
+  <h2><span class="n">02</span>Our approach</h2>
+  <p>We will build an offline Edge AI system on a Raspberry Pi that counts pedestrians and vehicles at busy junctions and school zones. We use a pretrained COCO detector (YOLO11n, with SSDLite-MobileNetV3 as a fallback), exported to ExecuTorch (<span class="mono">.pte</span>) with the XNNPACK backend so it runs efficiently on the Pi’s ARM CPU. The pipeline samples frames from the organiser’s 10–20-second clip or image set and resizes each to 640 px. It runs inference locally, keeps only the chosen categories (person, car, bus, truck, motorcycle, bicycle), and applies confidence thresholding and non-maximum suppression before counting each frame. For every frame we print per-category counts, save an annotated image with boxes and a count overlay, and append a row to a CSV. We also report average inference time per frame, throughput in FPS, model size and memory use as measured on the Pi itself.</p>
+
+  <div class="foot"><span>PS2 · Edge-based object detection and counting</span><span>1 / 4</span></div>
+</section>
+
+<!-- ============ PAGE 2 ============ -->
+<section class="page">
+  <div class="run"><span>Namma AI Hackathon · CoE-IoT</span><span>Problem Statement 2 · Approach &amp; Plan</span></div>
+
+  <h2 style="margin-top:4mm"><span class="n">03</span>We have already run it</h2>
+  <p>We didn’t want to find out on the day that the export fails, so we checked first. We exported YOLO11n to an ExecuTorch program with Ultralytics and ExecuTorch 1.6 (XNNPACK delegate). We then ran six public photos of Bengaluru streets through the ExecuTorch runtime. Every count and timing on this page comes from that run.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">10.2<small>MB</small></div><div class="k">size of <span class="mono">model.pte</span> (FP32, YOLO11n, 640 px input)</div></div>
+    <div class="stat"><div class="v">40.7<small>ms</small></div><div class="k">mean inference per image, 10 timed runs per photo after a warm-up</div></div>
+    <div class="stat"><div class="v">≈24<small>img/s</small></div><div class="k">inference-only throughput, excluding decode and drawing</div></div>
+    <div class="stat"><div class="v">73</div><div class="k">objects counted across six photos in a single pass each</div></div>
+  </div>
+  <p class="note">These timings are from a laptop CPU (Intel i7-13620H), not the Pi. The Raspberry Pi will be noticeably slower, and that Pi measurement is the number we will report in the final submission.</p>
+
+  <table>
+    <thead><tr><th>Photo</th><th>Scene</th><th class="r">Person</th><th class="r">Car</th><th class="r">2-wheeler</th><th class="r">Bus / truck</th><th class="r">Total</th><th class="r">ms</th></tr></thead>
+    <tbody>
+      <tr><td>Junction, central Bengaluru</td><td>mixed traffic</td><td class="r">4</td><td class="r">5</td><td class="r">2</td><td class="r">3</td><td class="r">14</td><td class="r">33.5</td></tr>
+      <tr><td>Egipura signal, evening</td><td>queue at red light</td><td class="r">6</td><td class="r">4</td><td class="r">–</td><td class="r">1</td><td class="r">11</td><td class="r">40.8</td></tr>
+      <tr><td>Brigade Road</td><td>shopping street</td><td class="r">13</td><td class="r">2</td><td class="r">–</td><td class="r">–</td><td class="r">15</td><td class="r">51.0</td></tr>
+      <tr><td>Majestic bus stand</td><td>pedestrian ramp</td><td class="r">12</td><td class="r">–</td><td class="r">–</td><td class="r">–</td><td class="r">12</td><td class="r">43.0</td></tr>
+      <tr><td>Tree-lined arterial road</td><td>footpath + road</td><td class="r">6</td><td class="r">4</td><td class="r">3</td><td class="r">–</td><td class="r">13</td><td class="r">41.7</td></tr>
+      <tr><td>Signal, autos in queue</td><td>mixed traffic</td><td class="r">1</td><td class="r">5</td><td class="r">–</td><td class="r">2</td><td class="r">8</td><td class="r">34.0</td></tr>
+      <tr class="tot"><td>All six</td><td></td><td class="r">42</td><td class="r">20</td><td class="r">5</td><td class="r">6</td><td class="r">73</td><td class="r">40.7</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Confidence threshold 0.30, NMS IoU 0.7. “2-wheeler” is COCO <span class="mono">motorcycle</span>; no bicycles were detected. The Majestic photo counts 12 people in a single pass; §4 shows why that is too low.</p>
+
+  <h2><span class="n">—</span>Pipeline</h2>
+  <svg class="pipe" viewBox="-4 0 710 92" width="100%" font-family="IBM Plex Sans" font-size="10.5">
+    <defs><marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8" fill="none" stroke="#1c1b19" stroke-width="1.2"/></marker></defs>
+    <g stroke="#1c1b19" stroke-width="1" fill="none">
+      <rect x="1" y="20" width="92" height="44"/><rect x="117" y="20" width="92" height="44"/>
+      <rect x="233" y="20" width="118" height="44" fill="#f6ead2" stroke="#d9900f"/>
+      <rect x="375" y="20" width="98" height="44"/><rect x="497" y="20" width="80" height="44"/>
+      <rect x="601" y="20" width="98" height="44"/>
+      <path d="M93 42H115M209 42H231M351 42H373M473 42H495M577 42H599" marker-end="url(#a)"/>
+    </g>
+    <g fill="#1c1b19" text-anchor="middle">
+      <text x="47" y="39" font-weight="600">Clip / images</text><text x="47" y="53" fill="#5d5a53" font-size="9">10–20 s clip / imgs</text>
+      <text x="163" y="39" font-weight="600">Frame sampler</text><text x="163" y="53" fill="#5d5a53">resize → 640</text>
+      <text x="292" y="39" font-weight="600">ExecuTorch .pte</text><text x="292" y="53" fill="#5d5a53">XNNPACK · ARM CPU</text>
+      <text x="424" y="39" font-weight="600">Filter + NMS</text><text x="424" y="53" fill="#5d5a53" font-size="9">6 classes, conf ≥ .3</text>
+      <text x="537" y="39" font-weight="600">Counter</text><text x="537" y="53" fill="#5d5a53">per frame</text>
+      <text x="650" y="39" font-weight="600">Outputs</text><text x="650" y="53" fill="#5d5a53" font-size="9">terminal · JPG · CSV</text>
+    </g>
+    <text x="292" y="84" text-anchor="middle" font-size="9" fill="#8c887e" font-family="IBM Plex Mono">everything inside the Pi · no network</text>
+  </svg>
+
+  <figure style="margin-top:4mm">
+    <div class="pair"><img src="../img/out/c04_det.jpg" alt=""><img src="../img/out/c00_det.jpg" alt=""></div>
+    <figcaption><b>Fig. 2.</b> Two sample outputs. Left, Brigade Road: 13 people and 2 cars. Right, Egipura signal at dusk: 6 riders, 4 cars and 1 bus. The model still works in low light, but the lower confidence scores (0.3–0.5) show where its limits are.</figcaption>
+  </figure>
+
+  <div class="foot"><span>PS2 · Edge-based object detection and counting</span><span>2 / 4</span></div>
+</section>
+
+<!-- ============ PAGE 3 ============ -->
+<section class="page">
+  <div class="run"><span>Namma AI Hackathon · CoE-IoT</span><span>Problem Statement 2 · Approach &amp; Plan</span></div>
+
+  <h2 style="margin-top:4mm"><span class="n">04</span>Two things the test run taught us</h2>
+
+  <div class="finding">
+    <div class="imgs"><img src="../img/out/crop_auto.jpg" alt=""><div class="tag">auto-rickshaw → “truck 0.66”</div></div>
+    <div>
+      <h3>COCO has never seen an auto-rickshaw.</h3>
+      <p>The pretrained model labels autos as <span class="mono">truck</span> or <span class="mono">car</span>. On Indian roads that is a large share of traffic, so a per-class count of trucks would be misleading. Since we are not allowed to retrain, we report one merged <b>vehicle</b> count (car + bus + truck + motorcycle) alongside the raw per-class numbers, and we state this caveat openly.</p>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="imgs two"><div><img src="../img/out/crop_crowd_a.jpg" alt=""><div class="tag">single pass · 12</div></div><div><img src="../img/out/crop_crowd_b.jpg" alt=""><div class="tag">2×2 tiles · 27</div></div></div>
+    <div>
+      <h3>Small, distant people get missed.</h3>
+      <p>At Majestic, a single 640 px pass counted 12 people. Splitting the frame into four overlapping tiles and merging the results with NMS counted <b>27</b>, but took 257 ms instead of 43.</p>
+      <div class="callout">Tiling will be a switch, not the default. We will use it for wide crowd scenes when the Pi has time to spare, and report both numbers.</div>
+    </div>
+  </div>
+
+  <h2><span class="n">05</span>Plan for the event</h2>
+  <ol class="plan">
+    <li><div><b>Run the model on the Pi first.</b> Copy the prepared <span class="mono">.pte</span>, run one image and confirm the boxes match the laptop’s. If the export misbehaves on ARM, we switch to SSDLite-MobileNetV3 from torchvision.</div></li>
+    <li><div><b>Process the organiser’s data.</b> Sample the clip at a fixed rate (or take all 10–20 images), count each frame, and save annotated JPGs and <span class="mono">counts.csv</span>.</div></li>
+    <li><div><b>Measure on the Pi.</b> Record mean and median inference time per frame, FPS, the <span class="mono">.pte</span> size and peak RAM (<span class="mono">/proc/self/status</span>). We report these alongside the laptop numbers so the gap is visible.</div></li>
+    <li><div><b>If time allows: INT8.</b> Quantise with XNNPACK’s quantiser, then compare speed and counts against FP32 on the same frames.</div></li>
+    <li><div><b>Prepare the two-minute explanation.</b> Problem, one frame with live counts, numbers measured on the Pi, and the school-zone use case below.</div></li>
+  </ol>
+
+  <h2><span class="n">07</span>One practical application</h2>
+  <p><b>School-zone crossing counts.</b> A Pi mounted at a school gate counts children and two-wheelers at the crossing between 8 and 9 a.m. A week of numbers is enough to show the ward engineer or traffic police that the crossing needs a marshal, a speed table or a longer pedestrian phase. The video never leaves the box and no faces are stored, so the school can install it without a privacy argument. Junctions, bus stands and market streets follow the same pattern: one device, one CSV.</p>
+
+  <div class="foot"><span>PS2 · Edge-based object detection and counting</span><span>3 / 4</span></div>
+</section>
+
+<!-- ============ PAGE 4 ============ -->
+<section class="page">
+  <div class="run"><span>Namma AI Hackathon · CoE-IoT</span><span>Problem Statement 2 · Approach &amp; Plan</span></div>
+
+  <h2 style="margin-top:4mm"><span class="n">06</span>Mapping to the mandatory deliverables</h2>
+  <table class="check">
+    <tbody>
+      <tr><td>Organiser clip or images, approved pretrained model, ExecuTorch on Pi</td><td>YOLO11n (COCO) as <span class="mono">model.pte</span>, XNNPACK delegate, run on the Raspberry Pi. Already exported and tested.</td></tr>
+      <tr><td>At least one category, with counts per frame</td><td>Six COCO classes plus a merged “vehicle” count, shown in the terminal and on every annotated frame.</td></tr>
+      <tr><td>Category and counts, plus two sample outputs</td><td><span class="mono">counts.csv</span> and the full folder of annotated frames. We will pick the two clearest as samples.</td></tr>
+      <tr><td>Average inference time, model, throughput</td><td>Mean and median ms per frame, FPS, model size and peak RAM, all measured on the Pi.</td></tr>
+      <tr><td>Societal issue and one application (≤ 2 min)</td><td>Pedestrian load at school gates, explained below.</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="n">—</span>What the terminal output looks like</h2>
+  <pre class="term"><span class="p">$ python count.py --input samples/</span>
+arterial_05   person=6   vehicle=7    32.9 ms
+brigade_03    person=13  vehicle=2    59.3 ms
+egipura_02    person=6   vehicle=5    30.8 ms
+junction_01   person=4   vehicle=10   39.8 ms
+majestic_04   person=12  vehicle=0    32.5 ms
+signal_06     person=1   vehicle=7    33.3 ms
+────────────────────────────────────────────
+frames=6  mean=38.1 ms  thru≈26.2 img/s  model=10.2 MB</pre>
+  <p class="note">This is real output from our counting script on the six test photos, run on the laptop. Single-run timings vary by ±15 ms between runs, which is why the table on page 2 averages ten runs. The same script writes <span class="mono">counts.csv</span> and one annotated JPG per frame.</p>
+
+  <div class="credits">
+    Photos: Wikimedia Commons, used under their licences. The annotations are ours.
+    Fig. 1 “Bangalore India traffic”, Eirik Refsdal, CC BY 2.0 ·
+    Brigade Road, Ryan from Toronto, CC BY 2.0 ·
+    Egipura signal, psubhashish, CC BY-SA 3.0 ·
+    Majestic bus stand, Amol.Gaitonde, CC BY-SA 3.0 ·
+    Arterial road and signal with autos, T. R. Shankar Raman, CC BY-SA 4.0.
+  </div>
+
+  <div class="foot" style="margin-top:3mm"><span>PS2 · Edge-based object detection and counting</span><span>4 / 4</span></div>
+</section>
+</body>
+</html>
