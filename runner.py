@@ -10,8 +10,36 @@ NAMES = {0: "person", 1: "bicycle", 2: "car", 3: "motorcycle", 5: "bus", 7: "tru
 IDS = sorted(NAMES)
 
 
+GROUP = {0: "person", 2: "car", 5: "car", 7: "car", 1: "bike", 3: "bike"}
+GROUP_ID = {"person": 0, "car": 1, "bike": 2}   # grouped NMS: car/bus/truck, bike/motorcycle
+VEHICLE_IDS = {1, 2, 3, 5, 7}
+
+
+def postprocess(cand, conf_person=0.30, conf_vehicle=0.30, iou=0.7, grouped=False,
+                min_h=0.0, frame_h=None, only_person=False):
+    """cand = (xyxy [n,4], score [n], cid [n]) raw candidates in image pixels, before NMS.
+    Returns [(name, score, (x1,y1,x2,y2))]. Two thresholds, NMS per class or per group, min box height."""
+    xyxy, score, cid = cand
+    if len(score) == 0:
+        return []
+    thr = np.where(cid == 0, conf_person, conf_vehicle)
+    keep = score >= thr
+    if only_person:
+        keep &= cid == 0
+    if min_h and frame_h:
+        keep &= (xyxy[:, 3] - xyxy[:, 1]) >= min_h * frame_h
+    if not keep.any():
+        return []
+    xyxy, score, cid = xyxy[keep], score[keep], cid[keep]
+    grp = np.array([GROUP_ID[GROUP[int(c)]] if grouped else int(c) for c in cid])
+    wh = [[float(r[0]), float(r[1]), float(r[2] - r[0]), float(r[3] - r[1])] for r in xyxy]
+    idx = cv2.dnn.NMSBoxesBatched(wh, score.tolist(), grp.tolist(), 0.0, iou)
+    return [(NAMES[int(cid[i])], float(score[i]), tuple(float(v) for v in xyxy[i]))
+            for i in np.array(idx).flatten()]
+
+
 class ExecutorchDetector:
-    """YOLO11n .pte (INT8 or FP32): input [1,3,S,S] in 0..1, output [1,84,N]. S is read from the file."""
+    """YOLO11 .pte (INT8 or FP32): input [1,3,S,S] in 0..1, output [1,84,N]. S is read from the file."""
 
     def __init__(self, pte, iou=0.7):
         import torch
@@ -23,38 +51,84 @@ class ExecutorchDetector:
         except Exception:
             self.size = 640
 
-    def detect(self, img_bgr, conf=0.30, only_person=False):
-        """Returns ([(name, score, (x1,y1,x2,y2))], inference_ms). Boxes in input-image pixels."""
+    def raw(self, img_bgr, floor=0.05):
+        """Raw candidates above `floor` before NMS: ((xyxy, score, cid), inference_ms). Pixels of img_bgr."""
+        t_in = time.perf_counter()
         h0, w0 = img_bgr.shape[:2]
         S = self.size
         s = min(S / w0, S / h0)
         nw, nh = round(w0 * s), round(h0 * s)
-        rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        # resize first, colour-convert the small image (not the full 1080p frame)
+        small = cv2.cvtColor(cv2.resize(img_bgr, (nw, nh), interpolation=cv2.INTER_LINEAR), cv2.COLOR_BGR2RGB)
         canvas = np.full((S, S, 3), 114, np.uint8)
         px, py = (S - nw) // 2, (S - nh) // 2
-        canvas[py:py + nh, px:px + nw] = cv2.resize(rgb, (nw, nh), interpolation=cv2.INTER_LINEAR)
+        canvas[py:py + nh, px:px + nw] = small
         x = self.torch.from_numpy(canvas).permute(2, 0, 1).unsqueeze(0).float().div_(255).contiguous()
         t0 = time.perf_counter()
+        self.pre_ms = getattr(self, "pre_ms", 0.0) + (t0 - t_in) * 1000
         out = self.method.execute([x])[0]
         ms = (time.perf_counter() - t0) * 1000
-        pred = out.numpy()[0].T                      # [8400, 84]
-        ids = [0] if only_person else IDS
-        cls = pred[:, [4 + i for i in ids]]
+        pred = out.numpy()[0].T                      # [N, 84]
+        cls = pred[:, [4 + i for i in IDS]]
         best = cls.argmax(1)
         score = cls[np.arange(len(cls)), best]
-        keep = score > conf
-        if not keep.any():
-            return [], ms
+        keep = score > floor
         b, score, best = pred[keep, :4], score[keep], best[keep]
         xyxy = np.stack([b[:, 0] - b[:, 2] / 2, b[:, 1] - b[:, 3] / 2,
                          b[:, 0] + b[:, 2] / 2, b[:, 1] + b[:, 3] / 2], 1)
         xyxy[:, [0, 2]] = ((xyxy[:, [0, 2]] - px) / s).clip(0, w0)
         xyxy[:, [1, 3]] = ((xyxy[:, [1, 3]] - py) / s).clip(0, h0)
-        wh = [[float(r[0]), float(r[1]), float(r[2] - r[0]), float(r[3] - r[1])] for r in xyxy]
-        cid = [int(ids[i]) for i in best]
-        idx = cv2.dnn.NMSBoxesBatched(wh, score.tolist(), cid, conf, self.iou)
-        dets = [(NAMES[cid[i]], float(score[i]), tuple(float(v) for v in xyxy[i])) for i in np.array(idx).flatten()]
-        return dets, ms
+        cid = np.array([IDS[i] for i in best], dtype=np.int64)
+        return (xyxy.astype(np.float32), score.astype(np.float32), cid), ms
+
+    def detect(self, img_bgr, conf=0.30, only_person=False, conf_vehicle=None, iou=None,
+               grouped=False, min_h=0.0):
+        """Returns ([(name, score, (x1,y1,x2,y2))], inference_ms). Boxes in input-image pixels."""
+        cv = conf if conf_vehicle is None else conf_vehicle
+        cand, ms = self.raw(img_bgr, floor=min(conf, cv))
+        return postprocess(cand, conf, cv, self.iou if iou is None else iou, grouped, min_h,
+                           img_bgr.shape[0], only_person), ms
+
+
+def containment_filter(dets, thr=0.7):
+    """Drop a box that is mostly inside a larger box of the same group (halves cut by a tile edge)."""
+    out = []
+    for i, (n, sc, b) in enumerate(dets):
+        a = max(1e-6, (b[2] - b[0]) * (b[3] - b[1]))
+        dup = False
+        for j, (n2, _, b2) in enumerate(dets):
+            if i == j or GROUP_BY_NAME[n2] != GROUP_BY_NAME[n]:
+                continue
+            a2 = (b2[2] - b2[0]) * (b2[3] - b2[1])
+            if a2 <= a:
+                continue
+            ix = max(0, min(b[2], b2[2]) - max(b[0], b2[0]))
+            iy = max(0, min(b[3], b2[3]) - max(b[1], b2[1]))
+            if ix * iy / a > thr:
+                dup = True
+                break
+        if not dup:
+            out.append((n, sc, b))
+    return out
+
+
+GROUP_BY_NAME = {NAMES[k]: v for k, v in GROUP.items()}
+
+
+def tiled_candidates(det, img, floor=0.05):
+    """One full-frame pass plus four tiles with 20% overlap, all classes. Returns (candidates, ms, passes)."""
+    h, w = img.shape[:2]
+    tw, th = int(w / 2 * 1.2), int(h / 2 * 1.2)
+    parts, total = [], 0.0
+    c, ms = det.raw(img, floor); parts.append(c); total += ms
+    for x0 in (0, w - tw):
+        for y0 in (0, h - th):
+            (xy, sc, ci), ms = det.raw(img[y0:y0 + th, x0:x0 + tw], floor)
+            total += ms
+            xy = xy.copy(); xy[:, [0, 2]] += x0; xy[:, [1, 3]] += y0
+            parts.append((xy, sc, ci))
+    cand = tuple(np.concatenate([p[k] for p in parts]) for k in range(3))
+    return cand, total, 5
 
 
 class UltralyticsDetector:
@@ -64,7 +138,7 @@ class UltralyticsDetector:
         from ultralytics import YOLO
         self.model = YOLO(str(path), task="detect")
 
-    def detect(self, img_bgr, conf=0.30, only_person=False):
+    def detect(self, img_bgr, conf=0.30, only_person=False, **_):
         r = self.model.predict(img_bgr, imgsz=640, conf=conf, verbose=False,
                                classes=[0] if only_person else IDS)[0]
         dets = [(r.names[int(c)], s, tuple(b)) for b, c, s in

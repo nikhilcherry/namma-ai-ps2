@@ -92,3 +92,20 @@ def draw_overlay(img, zone, text_lines):
         cv2.putText(img, t, (10, 28 + 26 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)
         cv2.putText(img, t, (10, 28 + 26 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
     return img
+
+
+def load_count_region(path, w, h):
+    """Optional 'count' polygon in zones.json (normalised). None = count the whole frame."""
+    if path and Path(path).exists():
+        pts = json.loads(Path(path).read_text()).get("count")
+        if pts:
+            return np.array([[int(x * w), int(y * h)] for x, y in pts], np.int32)
+    return None
+
+
+def in_region(dets, poly):
+    """Keep boxes whose foot point (bottom centre) is inside the counting polygon."""
+    if poly is None:
+        return dets
+    return [d for d in dets
+            if cv2.pointPolygonTest(poly.astype(np.float32), ((d[2][0] + d[2][2]) / 2, d[2][3]), False) >= 0]
