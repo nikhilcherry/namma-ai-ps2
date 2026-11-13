@@ -5,3 +5,6 @@ __pycache__/
 out_test/
 build/*.pdf
 bundle/wheels/
+.venv-twin/
+test_media/
+zone_grid.jpg

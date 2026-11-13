@@ -5,7 +5,7 @@ small box-maths add-ons (congestion, crowd level, pedestrians on road, head blur
   python main.py --source clip.mp4 --every 3        video, every 3rd frame
   python main.py --source clip.mp4 --zones zones.json --deploy   CSV only, no frames saved
 """
-import argparse, csv, resource, statistics, time
+import argparse, csv, json, platform, resource, statistics, time
 from collections import deque
 from pathlib import Path
 
@@ -79,7 +79,7 @@ if not files:
     raise SystemExit(f"no frames found in {src}")
 is_video = not src.is_dir()
 detect(files[0][2])  # warm-up, not timed
-times, rows, occ_hist = [], [], deque(maxlen=5)
+times, e2e, rows, occ_hist, alldets = [], [], [], deque(maxlen=5), {}
 for name, t, img in files:
     t0 = time.perf_counter()
     dets, ms = detect(img); times.append(ms)
@@ -103,6 +103,9 @@ for name, t, img in files:
         row.update(occupancy=round(occ_s, 3), traffic_level=insights.traffic_level(occ_s),
                    crowd_level=insights.crowd_level(n_ppl), ped_on_road=ped, riders=riders)
     rows.append(row)
+    e2e.append((time.perf_counter() - t0) * 1000)   # pre-process + inference + post-process + add-ons
+    alldets[name] = {"w": img.shape[1], "h": img.shape[0],
+                     "boxes": [[n, round(s, 3)] + [round(v, 1) for v in b] for n, s, b in dets]}
     print(f"{name:<14} person={cnt['person']:<3} vehicle={veh:<3} "
           f"{row['traffic_level'] or '-':<7} {row['crowd_level'] or '-':<5} {ms:6.1f} ms")
     if not a.deploy:
@@ -129,6 +132,8 @@ with open(out / "counts.csv", "w", newline="") as fh:
 with open(out / "counts.csv") as fh:
     st = stamp.write(out, list(csv.DictReader(fh)), a.model, a.source)
 
+(out / "detections.json").write_text(json.dumps(alldets))
+
 pte = sorted(Path(a.model).glob("*.pte")) if Path(a.model).is_dir() else [Path(a.model)]
 size_mb = pte[0].stat().st_size / 2**20
 m, med = statistics.mean(times), statistics.median(times)
@@ -139,9 +144,23 @@ print("─" * 60)
 print(f"frames={len(rows)}  model={pte[0].name} ({size_mb:.1f} MB)")
 print(f"inference ms: mean={m:.1f} median={med:.1f} p95={p95:.1f} std={statistics.pstdev(times):.1f}")
 print(f"throughput (inference only) ≈ {1000/m:.1f} FPS   peak RAM ≈ {peak_mb:.0f} MB (whole process)")
+me = statistics.mean(e2e)
+print(f"end to end (no image saving): mean={me:.1f} ms ≈ {1000/me:.1f} FPS")
 print(f"peak people: {peak_ppl['person']} at {peak_ppl['frame']}")
 print(f"stamp: model {st['model_sha256'][:12]}…  input {st['source_sha256'][:12]}…  head {st['head'][:16]}…")
 (out / "summary.txt").write_text(
     f"frames={len(rows)} model={pte[0].name} size_mb={size_mb:.2f}\n"
     f"infer_ms mean={m:.1f} median={med:.1f} p95={p95:.1f}\nfps_infer_only={1000/m:.1f}\n"
+    f"e2e_ms mean={me:.1f}\nfps_end_to_end={1000/me:.1f}\n"
     f"peak_ram_mb={peak_mb:.0f}\nstamp_head={st['head']}\n")
+try:
+    board = Path("/proc/device-tree/model").read_text().strip("\x00\n")
+except OSError:
+    board = platform.machine() + " (not a Pi)"
+(out / "summary.json").write_text(json.dumps({
+    "board": board, "model": pte[0].name, "input": getattr(det, "size", 640), "size_mb": round(size_mb, 2),
+    "frames": len(rows), "mean_ms": round(m, 1), "median_ms": round(med, 1), "p95_ms": round(p95, 1),
+    "std_ms": round(statistics.pstdev(times), 1), "fps_infer": round(1000 / m, 2),
+    "e2e_ms": round(me, 1), "fps_e2e": round(1000 / me, 2), "peak_ram_mb": round(peak_mb),
+    "people_total": sum(r["person"] for r in rows), "vehicle_total": sum(r["vehicle"] for r in rows),
+    "source": str(a.source), "every": a.every, "python": platform.python_version()}, indent=1))

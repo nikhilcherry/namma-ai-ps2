@@ -11,22 +11,27 @@ IDS = sorted(NAMES)
 
 
 class ExecutorchDetector:
-    """Arm YOLO11n .pte (INT8 or FP32): input [1,3,640,640] in 0..1, output [1,84,8400]."""
+    """YOLO11n .pte (INT8 or FP32): input [1,3,S,S] in 0..1, output [1,84,N]. S is read from the file."""
 
     def __init__(self, pte, iou=0.7):
         import torch
         from executorch.runtime import Runtime
         self.torch, self.iou = torch, iou
         self.method = Runtime.get().load_program(str(pte)).load_method("forward")
+        try:                                   # square input side, read from the .pte itself
+            self.size = int(self.method.metadata.input_tensor_meta(0).sizes()[-1])
+        except Exception:
+            self.size = 640
 
     def detect(self, img_bgr, conf=0.30, only_person=False):
         """Returns ([(name, score, (x1,y1,x2,y2))], inference_ms). Boxes in input-image pixels."""
         h0, w0 = img_bgr.shape[:2]
-        s = min(640 / w0, 640 / h0)
+        S = self.size
+        s = min(S / w0, S / h0)
         nw, nh = round(w0 * s), round(h0 * s)
         rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        canvas = np.full((640, 640, 3), 114, np.uint8)
-        px, py = (640 - nw) // 2, (640 - nh) // 2
+        canvas = np.full((S, S, 3), 114, np.uint8)
+        px, py = (S - nw) // 2, (S - nh) // 2
         canvas[py:py + nh, px:px + nw] = cv2.resize(rgb, (nw, nh), interpolation=cv2.INTER_LINEAR)
         x = self.torch.from_numpy(canvas).permute(2, 0, 1).unsqueeze(0).float().div_(255).contiguous()
         t0 = time.perf_counter()
