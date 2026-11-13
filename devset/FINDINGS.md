@@ -36,3 +36,9 @@ because the reference is more permissive; that is circular. Run `python tools/sw
 * T9 (INT8 at 480) not attempted: 480 already loses counts and the plan ranks it last.
 * Everything in section 4 of the plan needs the Pi.
 * `bundle/models/yolo11m_fp32_640.pte` is 80 MB (GitHub warns above 50 MB); s is 38 MB.
+
+## Update (later 2026-11-13)
+* `tools/devset_init.py` deduped the dev set to 24 distinct frames (16 tune / 8 check, fixed seed) and wrote a blank `devset/truth.csv` with the counting rule on top, plus numbered sheets in `devset/count_sheets/`. **Fill `person` and `vehicle` for each frame from the full-size files, then run `python tools/sweep.py`.** A blank truth.csv is ignored (proxy mode).
+* `--profile balanced` = one 960 pass + smoothing. Careful: on `signal_06` it counts 0 people where the 640 run counts 1.
+* Pi day: `bash tools/pi_check.sh --perf` (M1), `python tools/bench_hygiene.py --frames devset/frames --all` (M5, two runs per model, flags >10% drift).
+* x86 laptop: INT8 (~115 ms) is slower than FP32 (~79 ms) here, so INT8 gains must be measured on the Pi, not assumed.
