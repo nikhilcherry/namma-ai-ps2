@@ -29,6 +29,11 @@ python tools/handcount.py sheet --source clip.mp4 --run out/<model>    # 10 clea
 python tools/handcount.py table --run out/<model>                      # model vs human table
 python tools/live.py                               # phone takes a photo, the Pi counts it (LAN only)
 python stamp.py verify out/<model>                 # re-check the CSV against its hash chain
+python stamp.py keygen                             # once per device: creates .stamp_key (never commit); runs are then signed (HMAC)
+python tools/parity.py                             # runner.py vs Arm's reference output (untested on device)
+python tools/check_occupancy.py                    # low-res occupancy vs full-res (max diff 0.007 measured on random frames)
+python main.py --source folder/ --repeat 10        # image folder: 10 timing passes, counts written once
+# summary.json also records Pi temperature and throttle state before and after a run (untested on device)
 python main.py --source clip.mp4 --deploy          # CSV only: no frames are written at all
 ```
 
@@ -59,7 +64,7 @@ Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK b
 - **Traffic level:** share of the road zone covered by vehicle boxes: FREE < 25%, BUSY < 50%, JAMMED above.
 - **Pedestrians on the road:** people whose foot point is inside the zone, excluding riders (a person box mostly inside a two-wheeler box).
 - **Privacy:** the top quarter of every detected person box is blurred in saved frames (default; `--no-blur` disables); `--deploy` saves no frames.
-- **Integrity:** every CSV row is hash-chained with the model and input hashes (`stamp.json`). This detects accidental or partial edits; it is not a signature, because whoever edits the CSV can rebuild the chain. The commit that publishes `stamp.json` head is the anchor.
+- **Integrity:** every CSV row is hash-chained with the model and input hashes (`stamp.json`). Without a key this detects accidental or partial edits only, because whoever edits the CSV can rebuild the chain. With a key (`python stamp.py keygen`, or `STAMP_KEY`), `stamp.json` carries an HMAC and `verify` fails on a rebuilt or unsigned stamp. The commit that publishes `stamp.json` head is the anchor.
 
 ## Limits
 - Counts are per frame, not unique people or vehicles.

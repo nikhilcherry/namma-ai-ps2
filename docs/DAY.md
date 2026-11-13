@@ -15,6 +15,13 @@ bash bundle/install_pi.sh
 ```
 If it fails: read the ERROR line, it says what is wrong (32-bit OS, no python3-venv, Python version).
 
+## 1b. Sign the run (30 seconds)
+```bash
+python stamp.py keygen        # once; .stamp_key stays on the Pi, never in git
+```
+Then every `main.py` run writes a signed `stamp.json`; `python stamp.py verify out/<model>` checks it.
+Timing: for an image folder add `--repeat 10` so mean/median/p95 have enough samples.
+
 ## 2. Deliverables 1–4 (one command)
 ```bash
 bash run_all.sh /path/to/clip.mp4 gate --every 3      # junction if the clip is vehicle-heavy
