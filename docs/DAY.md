@@ -69,6 +69,7 @@ MAIN_MODEL=profile_accurate bash run_all.sh /path/to/clip.mp4 gate --every N --z
 **Look at the boxes before choosing.** If people in the clip are small, far away or packed together and
 many have no box, use `crowd` instead: `python main.py --source <clip> --profile crowd --out out/profile_crowd --every N --zones zones.json`,
 then `MAIN_MODEL=profile_crowd`. It is about 3.5 times slower than `accurate`, so raise `--every`.
+`--profile crowd-lite` runs only the tiles that need it: about half the time of `crowd`, a few people fewer in dense crowds.
 If `accurate` takes too long on this board, edit nothing: run
 `python main.py --source <clip> --profile lite --out out/profile_lite --every N --zones zones.json`
 and use `MAIN_MODEL=profile_lite`.

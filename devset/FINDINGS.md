@@ -109,3 +109,32 @@ Five independent detectors (n INT8, n FP32, n 960, s, m), full frame, 24 frames.
 | Submitted-counts profile | `accurate` (n FP32 640, full + 4 tiles); `lite` if time per frame matters | n is the only organiser-approved model | s/m approved: re-run `hybrid_eval.py`, consider `ensemble` |
 | Fast profile | Arm INT8 640 + `--skip-static 0.5` | measured count-diff rule | Pi timings in `bench_hygiene.py` |
 Closing step once counts exist: fill `devset/truth.csv`, run `python tools/sweep.py`; it prints ready-to-paste `main.py` flags per model (`devset/sweep.md`, section "Flags for main.py").
+
+## Paper ideas tried (14 Nov, laptop, six sample photos, YOLO11n FP32 640, conf 0.30; counts are people / vehicles)
+No human counts exist, so "better" below means "more boxes that look right when the image is opened", not a measured error.
+
+| Photo | 1 pass | 5 passes (`accurate`) | 17 passes (`crowd`) | guided, 5–9 passes (`crowd-lite`) |
+|---|---|---|---|---|
+| majestic_04 | 12 / 0 | 25 / 0 | 58 / 2 | 51 / 2 |
+| brigade_03 | 13 / 2 | 23 / 3 | 36 / 12 | 30 / 12 |
+| junction_01 | 4 / 7 | 12 / 12 | 19 / 17 | 19 / 17 |
+| arterial_05 | – | 8 / 8 | 8 / 10 | 8 / 10 |
+| egipura_02 | – | 5 / 5 | 6 / 7 | 6 / 7 |
+| signal_06 | – | 1 / 6 | 2 / 6 | 2 / 6 |
+
+| Idea (paper) | Result | Decision |
+|---|---|---|
+| Finer slicing, 4×4 tiles (SAHI, Akyon et al. 2022) | Majestic 25 → 58 people. Adds a few false boxes on close-up traffic (a billboard face, one oversized rider box) | **in**: `--tile-grid 4`, `--profile crowd` |
+| Cluster-guided tile selection (ClusDet / DMNet idea, using our own full-frame pass as the guide) | 51 of 102 passes over the six photos; same counts on four photos, 58 → 51 and 36 → 30 on the two crowds. Mean 1.16 s vs 2.70 s per image on the laptop | **in**: `--tile guided`, `--profile crowd-lite` |
+| SAHI's merge step (GreedyNMM, intersection over smaller, union box) | counts within 1–3 of our NMS + containment filter; union boxes grow large on overlapping vehicles | not adopted, no gain |
+| Soft-NMS (Bodla et al. 2017), Gaussian, σ 0.5 and 0.3 | Majestic 58 → 70 but with visible double boxes on single people; junction vehicles 17 → 29 (duplicates) | **rejected** |
+| Crowd-trained detector (CrowdHuman; third-party YOLO11s person + head ONNX, `Sharath33/Person`, openrail++) | Majestic people: 39 in one pass, 68 with 5 passes, 97 with 17 (61 heads). Brigade 56, junction 22. Opened and checked: it covers the packed crowd our model misses, with some overlap duplicates | **evidence only**: s-size, ONNX (not ExecuTorch), not ours, not organiser-approved. It shows the real fix is crowd-trained weights, not more tiling |
+| Density-map counters (DM-Count / CSRNet via `lwcc`) | see the next section if it finished | evidence only: a second model outside the YOLO11n approval |
+
+What this means for the day: `crowd` or `crowd-lite` for small or packed people, `accurate` for ordinary traffic. Say plainly
+that a COCO detector undercounts dense crowds and that a crowd-trained YOLO11n is the next step.
+
+## ARM64 vs x86: counts can differ by one on INT8
+In the emulated ARM64 rehearsal the Arm INT8 model counted 4 people on `junction_01`; on the laptop it counts 5. Quantized
+kernels differ per architecture, so a borderline box can flip. `tests/test_samples_golden.py` is therefore x86-only. Expect
+Pi counts to differ from laptop counts by about one per frame on INT8; only Pi counts go in the submission.

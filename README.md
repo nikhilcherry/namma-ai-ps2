@@ -88,6 +88,7 @@ Models are AGPL-3.0 (Ultralytics / Arm). Sample photos: Wikimedia Commons, credi
 | `lite` | yolo11n FP32 640, tiles only on crowded/small frames (`--tile adaptive`), smoothing | ~230 |
 | `accurate` | yolo11n FP32 640, full frame + 4 tiles, all classes, smoothing | ~450 |
 | `crowd` | yolo11n FP32 640, full frame + 16 tiles (`--tile-grid 4`), smoothing: for dense or far-away people | ~17 passes, about 3.5x `accurate` |
+| `crowd-lite` | as `crowd`, but only the tiles the full frame hints at (`--tile guided`): about half the passes, a few people fewer in dense crowds | ~5–9 passes |
 
 Only the **n** model is organiser-confirmed: `ensemble` (uses yolo11s) is for comparison until they approve s/m. The submitted-counts profile is `accurate` (or `lite`).
 

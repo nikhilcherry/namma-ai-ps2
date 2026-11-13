@@ -1,6 +1,8 @@
 """Pinned counts on the six sample photos (INT8 Arm model, conf 0.30, IoU 0.7). Skipped without the model/runtime.
+x86-64 only: the INT8 kernels differ per architecture, and on emulated ARM64 a borderline box flips
+(junction_01: 4 people instead of 5). So laptop counts and Pi counts can differ by one on INT8.
 --ungrouped must reproduce the pre-T3 counts exactly; grouped must differ only on signal_06 (7 -> 6 vehicles)."""
-import subprocess, sys, csv, tempfile
+import platform, subprocess, sys, csv, tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -17,6 +19,8 @@ def run(*flags):
 
 
 def _ok():
+    if platform.machine() not in ("x86_64", "AMD64"):
+        return False
     try:
         import executorch  # noqa
         return MODEL.exists()

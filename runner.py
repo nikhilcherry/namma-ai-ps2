@@ -166,7 +166,8 @@ def needs_tiles(cand, frame_h, conf=0.30, low=(0.15, 0.30), n_low=40, small_h=0.
     return False
 
 
-def tiled_candidates(det, img, floor=0.05, full=None, only_if=None, grid=2):
+def tiled_candidates(det, img, floor=0.05, full=None, only_if=None, grid=2, guided=False,
+                     hint=0.05, small=0.30):
     """One full-frame pass plus grid x grid tiles (20% overlap at grid 2, 25% above), all classes.
     Returns (candidates, ms, passes). grid 2 = 5 passes, 3 = 10, 4 = 17. Finer grids find far and
     crowded people (Majestic sample: 12 full frame, 23 at grid 2, 58 at grid 4) at that many inferences.
@@ -178,15 +179,24 @@ def tiled_candidates(det, img, floor=0.05, full=None, only_if=None, grid=2):
     c, ms = full if full is not None else det.raw(img, floor); parts.append(c); total += ms
     if only_if is not None and not only_if(c, h):
         return c, total, 1
+    if guided:   # cluster-guided cropping (ClusDet/DMNet idea, without their extra network): the full-frame pass
+        # itself says where small objects are. A tile runs only if it holds a hint: a candidate scoring >= hint
+        # whose box is shorter than `small` of the frame. floor must be <= hint.
+        fx, fs, _ = c
+        m = (fs >= hint) & ((fx[:, 3] - fx[:, 1]) < small * h)
+        hx, hy = (fx[m, 0] + fx[m, 2]) / 2, (fx[m, 1] + fx[m, 3]) / 2
+    passes = 1
     for i in range(grid):
         for j in range(grid):
             x0, y0 = round(i * (w - tw) / (grid - 1)), round(j * (h - th) / (grid - 1))
+            if guided and not ((hx >= x0) & (hx < x0 + tw) & (hy >= y0) & (hy < y0 + th)).any():
+                continue
             (xy, sc, ci), ms = det.raw(img[y0:y0 + th, x0:x0 + tw], floor)
-            total += ms
+            total += ms; passes += 1
             xy = xy.copy(); xy[:, [0, 2]] += x0; xy[:, [1, 3]] += y0
             parts.append((xy, sc, ci))
     cand = tuple(np.concatenate([p[k] for p in parts]) for k in range(3))
-    return cand, total, 1 + grid * grid
+    return cand, total, passes
 
 
 class UltralyticsDetector:

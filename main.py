@@ -38,6 +38,8 @@ PROFILES = {
                      deploy=False, no_addons=False, smooth=True),
     "crowd": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="all", tile_grid=4,
                   deploy=False, no_addons=False, smooth=True),   # 17 passes per frame: for dense or far-away people
+    "crowd-lite": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="guided", tile_grid=4,
+                       deploy=False, no_addons=False, smooth=True),   # crowd, but only tiles the full frame hints at: about half the passes, a few people fewer
 }
 
 ap = argparse.ArgumentParser()
@@ -71,7 +73,7 @@ ap.add_argument("--blur", action=argparse.BooleanOptionalAction, default=True,
 ap.add_argument("--deploy", action="store_true", help="write the CSV only, no frames")
 ap.add_argument("--tile-grid", type=int, default=2, choices=[2, 3, 4],
                 help="tiles per side for --tile all/adaptive: 2 = 5 passes, 3 = 10, 4 = 17. Use 4 for crowds and far-away people")
-ap.add_argument("--tile", choices=["off", "auto", "all", "adaptive"], default="off",
+ap.add_argument("--tile", choices=["off", "auto", "all", "adaptive", "guided"], default="off",
                 help="auto: people-only 2x2 when people look small; all: full frame + 4 tiles, all classes; adaptive: tiles only when the full frame looks crowded/small")
 ap.add_argument("--smooth", action="store_true", help="video: rolling median over 5 processed frames")
 ap.add_argument("--skip-static", type=float, nargs="?", const=0.5, default=0.0, metavar="MAD",
@@ -145,10 +147,11 @@ def frames():
 
 def detect(img):
     """(KEEP-class dets, model_ms, passes). Tiling modes run several passes; model_ms is their sum."""
-    if a.tile in ("all", "adaptive") and hasattr(det, "raw"):
-        cand, ms, passes = runner.tiled_candidates(det, img, min(CP, CV, 0.15) if a.tile == "adaptive" else min(CP, CV),
+    if a.tile in ("all", "adaptive", "guided") and hasattr(det, "raw"):
+        floor = 0.05 if a.tile == "guided" else min(CP, CV, 0.15) if a.tile == "adaptive" else min(CP, CV)
+        cand, ms, passes = runner.tiled_candidates(det, img, floor,
                                                    only_if=runner.needs_tiles if a.tile == "adaptive" else None,
-                                                   grid=a.tile_grid)
+                                                   grid=a.tile_grid, guided=a.tile == "guided")
         t0 = time.perf_counter()
         d = runner.postprocess(cand, CP, CV, min(a.iou, 0.5), GROUPED, a.min_h, img.shape[0])
         if passes > 1:
