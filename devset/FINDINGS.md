@@ -69,6 +69,6 @@ Proxy-reference error on the 8 check frames, legacy setting (conf 0.30, IoU 0.7)
 | n640 full | 86 | 55 | 59 |
 
 * **The 960 + tiling hybrid does not earn its place**: slightly worse than current `accurate` for people (28 vs 25), better for vehicles (36 vs 42), 28% slower. Not adopted.
-* **Cheapest useful upgrade**: n960 full + s640 full (two passes, ~215 ms) beats any single full-frame pass on both counts (37/34). Needs two models in one run, which `main.py` does not support yet; not built because the gain is only proven against a proxy.
+* **Cheapest useful upgrade** (now built: `--profile ensemble`, or `--model A.pte --also B.pte`): n960 full + s640 full, two passes, ~215-230 ms, beats any single full-frame pass on both counts (37/34 vs proxy). Candidates are merged before NMS and a containment filter removes the other model's duplicates. Still only proven against the proxy.
 * **Vehicles are undercounted by every recipe at the same 0.35 threshold** (bias -15 to -55 of 93): vehicle scores run lower than person scores. Dropping the vehicle threshold to ~0.20-0.25 closes most of the gap for the tiled recipes, but the reference runs at 0.35 too, so this shows "more boxes", not "more correct". It is the first thing to check with `truth.csv`: sweep `--conf-vehicle` alone. Use `--conf-vehicle 0.25` meanwhile only knowingly.
 * s-model tiling over-counts vehicles once cv < 0.25 (bias turns positive), so lowering the threshold and adding capacity do not stack.

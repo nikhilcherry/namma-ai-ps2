@@ -30,6 +30,8 @@ PROFILES = {
                  deploy=True, no_addons=False, skip_static=0.5),
     "balanced": dict(model="bundle/models/yolo11n_fp32_960.pte", tile="off", deploy=False, no_addons=False,
                      smooth=True),   # one 960 pass: most of tiling's people gain at ~1.4x cost (devset/FINDINGS.md)
+    "ensemble": dict(model="bundle/models/yolo11n_fp32_960.pte", also="bundle/models/yolo11s_fp32_640.pte",
+                     tile="off", deploy=False, no_addons=False, smooth=True),   # ~215 ms: beats any single pass (devset/FINDINGS.md)
     "accurate": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="all",
                      deploy=False, no_addons=False, smooth=True),
 }
@@ -40,6 +42,8 @@ ap.add_argument("--profile", choices=list(PROFILES), help="fast = INT8, no tilin
                 "accurate = FP32, tiling on, smoothing on. Explicit flags override.")
 ap.add_argument("--model", default="bundle/models/yolo11n_raspberry_executorch_optimized.pte",
                 help=".pte file (Arm INT8/FP32 via ExecuTorch) or an Ultralytics export dir")
+ap.add_argument("--also", default=None, help="second .pte: its full-frame candidates are merged with the first "
+                "model's before NMS (a 2-model ensemble; times are summed)")
 ap.add_argument("--backend", choices=["auto", "et", "ultralytics"], default="auto")
 ap.add_argument("--out", default="out")
 ap.add_argument("--conf", type=float, default=0.30, help="person threshold (and default for vehicles)")
@@ -73,6 +77,7 @@ GROUPED = not a.ungrouped
 src = Path(a.source)
 out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
 det = runner.load(a.model, a.backend)
+det2 = runner.load(a.also, a.backend) if a.also else None
 is_video = not src.is_dir()
 if a.smooth and not is_video:
     a.smooth = False                       # never smooth a folder of unrelated images
@@ -135,8 +140,13 @@ def detect(img):
 def _plain(img):
     if hasattr(det, "raw"):
         cand, ms = det.raw(img, min(CP, CV))
+        if det2 is not None:
+            c2, ms2 = det2.raw(img, min(CP, CV)); ms += ms2
+            cand = tuple(np.concatenate([cand[k], c2[k]]) for k in range(3))
         t0 = time.perf_counter()
         d = runner.postprocess(cand, CP, CV, a.iou, GROUPED, a.min_h, img.shape[0])
+        if det2 is not None:
+            d = runner.containment_filter(d)       # same-group box mostly inside a bigger one = the other model's duplicate
         T["post"] += time.perf_counter() - t0
         return d, ms
     return det.detect(img, min(CP, CV))
@@ -188,8 +198,9 @@ if first is None:
 detect(first[2])  # warm-up, not timed
 for k in T:
     T[k] = 0.0
-if hasattr(det, "pre_ms"):
-    det.pre_ms = 0.0
+for d_ in (det, det2):
+    if d_ is not None and hasattr(d_, "pre_ms"):
+        d_.pre_ms = 0.0
 files = itertools.chain([first], files)
 times, e2e, rows, occ_hist, alldets = [], [], [], deque(maxlen=5), {}
 last_grey, last_state, since_real, n_real = None, None, 0, 0
@@ -290,7 +301,7 @@ print(f"inference ms: mean={m:.1f} median={med:.1f} p95={p95:.1f} std={statistic
 print(f"throughput (inference only) ≈ {1000/m:.1f} FPS   peak RAM ≈ {peak_mb:.0f} MB (whole process)")
 me = statistics.mean(e2e)
 print(f"end to end (no image saving): mean={me:.1f} ms ≈ {1000/me:.1f} FPS")
-T["pre"] = getattr(det, "pre_ms", 0.0) / 1000
+T["pre"] = (getattr(det, "pre_ms", 0.0) + (getattr(det2, "pre_ms", 0.0) if det2 else 0.0)) / 1000
 T["infer"] = sum(times) / 1000
 tot = sum(T.values()) or 1.0
 shares = {k: round(100 * v / tot, 1) for k, v in T.items()}
@@ -308,7 +319,7 @@ except OSError:
     board = platform.machine() + " (not a Pi)"
 (out / "summary.json").write_text(json.dumps({
     "board": board, "model": pte[0].name, "input": getattr(det, "size", 640), "size_mb": round(size_mb, 2),
-    "profile": a.profile or "custom", "tile": a.tile, "conf_person": CP, "conf_vehicle": CV, "iou": a.iou,
+    "profile": a.profile or "custom", "tile": a.tile, "also": a.also, "conf_person": CP, "conf_vehicle": CV, "iou": a.iou,
     "grouped_nms": GROUPED, "min_h": a.min_h, "smooth": a.smooth,
     "frames": len(rows), "frames_inferred": n_real, "mean_ms": round(m, 1), "median_ms": round(med, 1),
     "p95_ms": round(p95, 1), "std_ms": round(statistics.pstdev(real), 1), "fps_infer": round(1000 / m, 2),
