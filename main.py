@@ -49,6 +49,8 @@ ap.add_argument("--iou", type=float, default=0.70, help="NMS IoU")
 ap.add_argument("--ungrouped", action="store_true", help="NMS per class instead of per group (old behaviour)")
 ap.add_argument("--min-h", type=float, default=0.0, help="drop boxes shorter than this share of frame height")
 ap.add_argument("--every", type=int, default=1, help="video: use every Nth frame")
+ap.add_argument("--repeat", type=int, default=1,
+                help="image folder: run inference N times over the folder for timing only (rows and counts are written once)")
 ap.add_argument("--zones", default=None, help="JSON with a normalised 'road' polygon, optional 'count' polygon")
 ap.add_argument("--no-addons", action="store_true", help="plain counting only")
 ap.add_argument("--blur", action=argparse.BooleanOptionalAction, default=True,
@@ -75,6 +77,22 @@ is_video = not src.is_dir()
 if a.smooth and not is_video:
     a.smooth = False                       # never smooth a folder of unrelated images
 T = {"decode": 0.0, "pre": 0.0, "infer": 0.0, "post": 0.0, "addons": 0.0, "save": 0.0}
+
+
+def pi_state():
+    """Temperature (C) and throttle bits from vcgencmd; None when not on a Pi."""
+    import shutil, subprocess
+    if not shutil.which("vcgencmd"):
+        return None
+    try:
+        t = subprocess.run(["vcgencmd", "measure_temp"], capture_output=True, text=True, timeout=3).stdout
+        th = subprocess.run(["vcgencmd", "get_throttled"], capture_output=True, text=True, timeout=3).stdout
+        return {"temp_c": float(t.split("=")[1].split("'")[0]), "throttled": th.strip().split("=")[1]}
+    except Exception:
+        return None
+
+
+PI0 = pi_state()
 
 
 def frames():
@@ -236,6 +254,13 @@ for name, t, img in files:
         cv2.imwrite(str(out / f"{name}_det.jpg"), vis)
         T["save"] += time.perf_counter() - ts
 
+if a.repeat > 1 and not is_video:       # timing only: more samples for mean / median / p95, no extra rows
+    imgs = sorted(p for p in src.iterdir() if p.suffix.lower() in IMG)
+    for _ in range(a.repeat - 1):
+        for p in imgs:
+            times.append(detect(cv2.imread(str(p)))[1])
+PI1 = pi_state()
+
 # rolling median over 5 processed frames, centred; video only
 for k, key in (("person", "person_smooth"), ("vehicle", "vehicle_smooth")):
     vals = [r[k] for r in rows]
@@ -290,4 +315,6 @@ except OSError:
     "e2e_ms": round(me, 1), "fps_e2e": round(1000 / me, 2), "stage_share_pct": shares,
     "peak_ram_mb": round(peak_mb),
     "people_total": sum(r["person"] for r in rows), "vehicle_total": sum(r["vehicle"] for r in rows),
+    "repeat": a.repeat, "samples": len(times), "pi_start": PI0, "pi_end": PI1,
+    "throttled_during_run": bool(PI1 and (PI1["throttled"] != "0x0" or (PI0 and PI0["throttled"] != PI1["throttled"]))),
     "zones": bool(a.zones and Path(a.zones).exists()), "source": str(a.source), "every": a.every, "python": platform.python_version()}, indent=1))
