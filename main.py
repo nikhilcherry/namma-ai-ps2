@@ -6,7 +6,11 @@ small box-maths add-ons (congestion, crowd level, pedestrians on road, head blur
   python main.py --source clip.mp4 --zones zones.json --deploy   CSV only, no frames saved
   python main.py --source clip.mp4 --profile fast|accurate       one flag sets the whole recipe
 """
-import argparse, csv, itertools, json, platform, resource, statistics, time
+import argparse, csv, itertools, json, platform, statistics, time
+try:
+    import resource
+except ImportError:          # Windows laptops
+    resource = None
 from collections import deque
 from pathlib import Path
 
@@ -133,6 +137,27 @@ def tiled_people(img):
     return len(cv2.dnn.NMSBoxes(boxes, scores, CP, 0.5))
 
 
+class ZoneCache:
+    """Zones.json is read and the road mask rasterised once per frame size, not once per frame."""
+    def __init__(self, path):
+        self.path, self.k, self.cp, self.rd = path, None, None, None
+
+    def _fill(self, w, h):
+        if self.k != (w, h):
+            zone = insights.load_zone(self.path, w, h)
+            self.k, self.cp = (w, h), insights.load_count_region(self.path, w, h)
+            self.rd = (zone, insights.zone_mask(zone, w, h))
+
+    def count_poly(self, w, h):
+        self._fill(w, h); return self.cp
+
+    def road(self, w, h):
+        self._fill(w, h); return self.rd
+
+
+ZC = ZoneCache(a.zones)
+
+
 def small_grey(img):
     return cv2.resize(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), (160, 90), interpolation=cv2.INTER_AREA)
 
@@ -162,7 +187,7 @@ for name, t, img in files:
         n_real += 1; since_real = 0
         last_grey, last_state = grey, dets
     ta = time.perf_counter()
-    zones_poly = insights.load_count_region(a.zones, img.shape[1], img.shape[0])
+    zones_poly = ZC.count_poly(img.shape[1], img.shape[0])
     dets = insights.in_region(dets, zones_poly)
     times.append(ms)
     names = [d[0] for d in dets]
@@ -173,7 +198,7 @@ for name, t, img in files:
            "riders": "", "reused": reused, "infer_ms": round(ms, 1)}
     if not a.no_addons:
         h, w = img.shape[:2]
-        zone = insights.load_zone(a.zones, w, h); zmask = insights.zone_mask(zone, w, h)
+        zone, zmask = ZC.road(w, h)
         occ = insights.occupancy(dets, zmask)
         occ_hist.append(occ)
         occ_s = float(np.median(occ_hist)) if is_video else occ   # smoothing only for real video
@@ -230,7 +255,7 @@ size_mb = pte[0].stat().st_size / 2**20
 real = [t for t in times if t > 0] or [0.0]
 m, med = statistics.mean(real), statistics.median(real)
 p95 = float(np.percentile(real, 95))
-peak_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+peak_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024 if resource else 0.0
 peak_ppl = max(rows, key=lambda r: r["person"])
 print("─" * 60)
 print(f"frames={len(rows)}  model={pte[0].name} ({size_mb:.1f} MB)  profile={a.profile or 'custom'}")

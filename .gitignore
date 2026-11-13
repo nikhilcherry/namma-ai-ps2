@@ -9,3 +9,9 @@ bundle/wheels/
 test_media/
 zone_grid.jpg
 devset/cache/
+# privacy: raw / unblurred frames and run outputs must never reach the public repo
+handcount/
+out/*/
+out/*_det.jpg
+deliverables/*.jpg
+!deliverables/sample_*.jpg
