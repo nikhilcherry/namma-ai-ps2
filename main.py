@@ -115,6 +115,9 @@ def frames():
     if src.is_dir():
         for i, f in enumerate(sorted(p for p in src.iterdir() if p.suffix.lower() in IMG)):
             t0 = time.perf_counter(); img = cv2.imread(str(f)); T["decode"] += time.perf_counter() - t0
+            if img is None:                      # corrupt / unreadable file: skip it, do not crash the whole run
+                print(f"WARNING: cannot read {f.name}, skipped", flush=True)
+                continue
             yield f.stem, float(i), img
         return
     cap = cv2.VideoCapture(str(src)); fps = cap.get(cv2.CAP_PROP_FPS) or 25.0; i = 0
