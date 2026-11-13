@@ -6,7 +6,7 @@ small box-maths add-ons (congestion, crowd level, pedestrians on road, head blur
   python main.py --source clip.mp4 --zones zones.json --deploy   CSV only, no frames saved
   python main.py --source clip.mp4 --profile fast|accurate       one flag sets the whole recipe
 """
-import argparse, csv, itertools, json, platform, statistics, time
+import argparse, os, csv, itertools, json, platform, statistics, time
 try:
     import resource
 except ImportError:          # Windows laptops
@@ -319,11 +319,17 @@ print(f"stamp: model {st['model_sha256'][:12]}…  input {st['source_sha256'][:1
     f"e2e_ms mean={me:.1f}\nfps_end_to_end={1000/me:.1f}\n"
     f"peak_ram_mb={peak_mb:.0f}\nstamp_head={st['head']}\n")
 try:
+    import executorch.extension.pybindings._portable_lib as _pl
+    THREADS = _pl._threadpool_get_thread_count()
+except Exception:
+    THREADS = None
+print(f"runtime threadpool: {THREADS} threads of {os.cpu_count()} cores" + ("" if THREADS in (None, os.cpu_count()) else "  <- not all cores used"))
+try:
     board = Path("/proc/device-tree/model").read_text().strip("\x00\n")
 except OSError:
     board = platform.machine() + " (not a Pi)"
 (out / "summary.json").write_text(json.dumps({
-    "board": board, "model": pte[0].name, "input": getattr(det, "size", 640), "size_mb": round(size_mb, 2),
+    "board": board, "threadpool_threads": THREADS, "cpu_count": os.cpu_count(), "model": pte[0].name, "input": getattr(det, "size", 640), "size_mb": round(size_mb, 2),
     "profile": a.profile or "custom", "tile": a.tile, "also": a.also, "conf_person": CP, "conf_vehicle": CV, "iou": a.iou,
     "grouped_nms": GROUPED, "min_h": a.min_h, "smooth": a.smooth,
     "frames": len(rows), "frames_inferred": n_real, "mean_ms": round(m, 1), "median_ms": round(med, 1),

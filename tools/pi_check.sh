@@ -22,3 +22,9 @@ if [ "$1" = "--perf" ] && [ "$g" != "n/a" ]; then
 fi
 echo "busy procs (close these):"; ps -eo pcpu,comm --sort=-pcpu | sed -n 2,5p | sed 's/^/  /'
 echo "tip: watch 'htop' during a run; all $(nproc) cores should be busy. If only 1-2 are, the runtime thread count is the problem."
+PYT=$(${PY:-python} - 2>/dev/null <<'PYEOF'
+import executorch.extension.pybindings._portable_lib as p, os
+print(f"{p._threadpool_get_thread_count()} threads of {os.cpu_count()} cores")
+PYEOF
+)
+echo "ET threadpool: ${PYT:-unavailable (executorch not importable in this python)}   (want threads == cores)"
