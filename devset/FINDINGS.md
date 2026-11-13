@@ -56,3 +56,19 @@ Proxy-reference error on the 8 check frames, legacy setting (conf 0.30, IoU 0.7)
 * `yolo11n_int8_480.pte` (no FP32 head) is kept only as the negative result; delete before the submission bundle.
 * 960 + tiling hybrid: not built. 960 with tiles over-counted crowds (45 vs 24 on Majestic) because tile and full-frame boxes of different scale survive NMS; the cheaper 960 single pass already captures most of the gain.
 * Vehicles: yolo11s full frame had the lowest vehicle error of the small models in the proxy sweep (0.6 vs 1.1-1.4 for n); a real answer needs truth.csv.
+
+## Hybrid and vehicle study (`tools/hybrid_eval.py`, vs PROXY reference m640 full+tiles; 24 frames, 145 people / 93 vehicles in the reference)
+| recipe | sum abs diff people | vehicles | ms/frame (laptop) |
+|---|---|---|---|
+| s640 full + s640 tiles | 21 | 25 | 515 |
+| n640 full + tiles (current `accurate`) | 25 | 42 | 390 |
+| s640 full + n640 tiles | 26 | 35 | 423 |
+| n960 full + n640 tiles (the "hybrid") | 28 | 36 | 499 |
+| n960 full + s640 full | 37 | 34 | 215 |
+| n960 full | 52 | 46 | 110 |
+| n640 full | 86 | 55 | 59 |
+
+* **The 960 + tiling hybrid does not earn its place**: slightly worse than current `accurate` for people (28 vs 25), better for vehicles (36 vs 42), 28% slower. Not adopted.
+* **Cheapest useful upgrade**: n960 full + s640 full (two passes, ~215 ms) beats any single full-frame pass on both counts (37/34). Needs two models in one run, which `main.py` does not support yet; not built because the gain is only proven against a proxy.
+* **Vehicles are undercounted by every recipe at the same 0.35 threshold** (bias -15 to -55 of 93): vehicle scores run lower than person scores. Dropping the vehicle threshold to ~0.20-0.25 closes most of the gap for the tiled recipes, but the reference runs at 0.35 too, so this shows "more boxes", not "more correct". It is the first thing to check with `truth.csv`: sweep `--conf-vehicle` alone. Use `--conf-vehicle 0.25` meanwhile only knowingly.
+* s-model tiling over-counts vehicles once cv < 0.25 (bias turns positive), so lowering the threshold and adding capacity do not stack.
