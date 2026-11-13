@@ -20,6 +20,13 @@ for pte in bundle/models/*.pte; do
 done
 [ -f "$OUT/$MAIN/summary.json" ] || MAIN="yolo11n_raspberry_executorch_original"   # INT8 failed (Pi 4): use FP32
 
+# The two profiles of EFFICIENCY_PLAN.md, run on the same clip: fast = the FPS figure, accurate = the submitted counts.
+for prof in fast accurate; do
+  echo; echo "=== profile: $prof ==="
+  $PY main.py --source "$SRC" --profile $prof --out "$OUT/profile_$prof" "$@" || echo "!! profile $prof failed"
+done
+$PY tools/profile_diff.py "$OUT/profile_fast" "$OUT/profile_accurate" > "$OUT/profiles.md" 2>/dev/null && cat "$OUT/profiles.md" || true
+
 echo; $PY tools/bench_table.py "$OUT" --fill-readme
 $PY tools/report.py "$OUT/$MAIN" --story "$STORY" ${SITE:+--site "$SITE"} || echo "!! report failed (not a deliverable)"
 $PY stamp.py verify "$OUT/$MAIN"

@@ -85,8 +85,8 @@ else:
     for r in hand:
         m = model[r["frame"]]
         ph, vh = int(r["person_hand"]), int(r["vehicle_hand"])
-        pm = int(m["person_tiled"]) if m.get("person_tiled") else int(m["person"])
-        vm = int(m["vehicle"])
+        pm = int(m["person_tiled"]) if m.get("person_tiled") else int(m.get("person_smooth") or m["person"])
+        vm = int(m.get("vehicle_smooth") or m["vehicle"])
         out.append(f"| {r['frame']} | {ph} | {pm} | {pm - ph:+d} | {vh} | {vm} | {vm - vh:+d} |")
         hp += ph; hv += vh; tp += pm; tv += vm; ep += abs(pm - ph); ev += abs(vm - vh)
         within += abs(pm - ph) <= 2 and abs(vm - vh) <= 2

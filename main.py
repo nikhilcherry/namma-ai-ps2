@@ -23,7 +23,7 @@ COLUMNS = ["frame", "t_s", "person", "car", "bus", "truck", "motorcycle", "bicyc
 # Starting guesses, replaced by measurements (tools/sweep.py, benchmark table).
 PROFILES = {
     "fast": dict(model="bundle/models/yolo11n_raspberry_executorch_optimized.pte", tile="off",
-                 deploy=True, no_addons=False, skip_static=True),
+                 deploy=True, no_addons=False, skip_static=0.5),
     "accurate": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="all",
                      deploy=False, no_addons=False, smooth=True),
 }
@@ -50,9 +50,9 @@ ap.add_argument("--deploy", action="store_true", help="write the CSV only, no fr
 ap.add_argument("--tile", choices=["off", "auto", "all"], default="off",
                 help="auto: people-only 2x2 when people look small; all: full frame + 4 tiles, all classes")
 ap.add_argument("--smooth", action="store_true", help="video: rolling median over 5 processed frames")
-ap.add_argument("--skip-static", type=float, nargs="?", const=2.0, default=0.0, metavar="MAD",
+ap.add_argument("--skip-static", type=float, nargs="?", const=0.5, default=0.0, metavar="MAD",
                 help="fixed camera: reuse the last counts if mean abs diff of a 160x90 grey copy is below MAD "
-                     "(default 2); a real inference is forced at least every 10th processed frame")
+                     "(default 0.5, measured: 2.0 and 1.0 changed a count by 2); a real inference is forced at least every 10th processed frame")
 pre, _ = ap.parse_known_args()
 if pre.profile:
     ap.set_defaults(**PROFILES[pre.profile])

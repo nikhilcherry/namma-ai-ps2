@@ -26,8 +26,8 @@ with open(run / "counts.csv") as f:
 S = json.loads((run / "summary.json").read_text())
 D = json.loads((run / "detections.json").read_text())
 I = lambda r, k: int(r[k]) if r.get(k) not in ("", None) else 0
-ppl = [I(r, "person_tiled") or I(r, "person") for r in rows]
-veh = [I(r, "vehicle") for r in rows]
+ppl = [I(r, "person_tiled") or I(r, "person_smooth") or I(r, "person") for r in rows]
+veh = [I(r, "vehicle_smooth") or I(r, "vehicle") for r in rows]
 ped = [I(r, "ped_on_road") for r in rows]
 addons = rows[0]["traffic_level"] != ""
 lv = Counter(r["traffic_level"] for r in rows)
