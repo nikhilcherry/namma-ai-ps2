@@ -24,6 +24,8 @@ COLUMNS = ["frame", "t_s", "person", "car", "bus", "truck", "motorcycle", "bicyc
 PROFILES = {
     "fast": dict(model="bundle/models/yolo11n_raspberry_executorch_optimized.pte", tile="off",
                  deploy=True, no_addons=False, skip_static=0.5),
+    "balanced": dict(model="bundle/models/yolo11n_fp32_960.pte", tile="off", deploy=False, no_addons=False,
+                     smooth=True),   # one 960 pass: most of tiling's people gain at ~1.4x cost (devset/FINDINGS.md)
     "accurate": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="all",
                      deploy=False, no_addons=False, smooth=True),
 }
