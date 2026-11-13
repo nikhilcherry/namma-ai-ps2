@@ -32,6 +32,8 @@ PROFILES = {
                      smooth=True),   # one 960 pass: most of tiling's people gain at ~1.4x cost (devset/FINDINGS.md)
     "ensemble": dict(model="bundle/models/yolo11n_fp32_960.pte", also="bundle/models/yolo11s_fp32_640.pte",
                      tile="off", deploy=False, no_addons=False, smooth=True),   # ~215 ms: beats any single pass (devset/FINDINGS.md)
+    "lite": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="adaptive", deploy=False,
+                 no_addons=False, smooth=True),   # n only (organiser-approved), tiles only on crowded/small frames: ~half of accurate's time
     "accurate": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="all",
                      deploy=False, no_addons=False, smooth=True),
 }
@@ -39,7 +41,8 @@ PROFILES = {
 ap = argparse.ArgumentParser()
 ap.add_argument("--source", required=True, help="image folder or video file")
 ap.add_argument("--profile", choices=list(PROFILES), help="fast = INT8, no tiling, no images, skip static frames; "
-                "accurate = FP32, tiling on, smoothing on. Explicit flags override.")
+                "accurate = FP32, tiling on, smoothing on; lite = accurate with adaptive tiling; balanced/ensemble use 960 / yolo11s "
+                "(s needs organiser approval before it produces submitted counts). Explicit flags override.")
 ap.add_argument("--model", default="bundle/models/yolo11n_raspberry_executorch_optimized.pte",
                 help=".pte file (Arm INT8/FP32 via ExecuTorch) or an Ultralytics export dir")
 ap.add_argument("--also", default=None, help="second .pte: its full-frame candidates are merged with the first "
