@@ -289,9 +289,9 @@ PI1 = pi_state()
 
 # rolling median over 5 processed frames, centred; video only
 for k, key in (("person", "person_smooth"), ("vehicle", "vehicle_smooth")):
-    vals = [r[k] for r in rows]
-    for i, r in enumerate(rows):
-        r[key] = int(statistics.median(vals[max(0, i - 2):i + 3])) if a.smooth else r[k]
+    sm = insights.rolling_median([r[k] for r in rows]) if a.smooth else [r[k] for r in rows]
+    for r, v in zip(rows, sm):
+        r[key] = v
 
 with open(out / "counts.csv", "w", newline="") as fh:
     w_ = csv.DictWriter(fh, fieldnames=COLUMNS); w_.writeheader(); w_.writerows(rows)

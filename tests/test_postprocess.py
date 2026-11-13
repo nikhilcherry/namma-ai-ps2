@@ -79,6 +79,18 @@ def test_needs_tiles_trigger():
     assert not runner.needs_tiles(big, H)
 
 
+def test_rolling_median_removes_one_frame_flicker():
+    assert insights.rolling_median([5, 5, 0, 5, 5]) == [5, 5, 5, 5, 5]          # one-frame dropout filled
+    assert insights.rolling_median([0, 0, 0, 0, 0]) == [0, 0, 0, 0, 0]          # a real zero stays zero
+    assert insights.rolling_median([3]) == [3] and insights.rolling_median([]) == []
+
+
+def test_rolling_median_keeps_real_steps_and_ends():
+    out = insights.rolling_median([0, 0, 0, 10, 10, 10, 10])
+    assert out[0] == 0 and out[-1] == 10 and out[2] == 0 and out[4] == 10       # step moves by <= 1 frame
+    assert all(isinstance(x, int) for x in out)
+
+
 if __name__ == "__main__":
     fails = 0
     for k, f in sorted(globals().items()):

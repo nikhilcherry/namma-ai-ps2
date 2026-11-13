@@ -129,3 +129,10 @@ def in_region(dets, poly):
         return dets
     return [d for d in dets
             if cv2.pointPolygonTest(poly.astype(np.float32), ((d[2][0] + d[2][2]) / 2, d[2][3]), False) >= 0]
+
+
+def rolling_median(vals, window=5):
+    """Centred rolling median of integer counts; the window shrinks at the ends. A median of an even-sized
+    window is rounded down to an int (so a flicker to 0 never produces 0.5)."""
+    h = window // 2
+    return [int(np.median(vals[max(0, k - h):k + h + 1])) for k in range(len(vals))]
