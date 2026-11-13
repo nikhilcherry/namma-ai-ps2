@@ -112,4 +112,4 @@ Tracking, direction/dwell, any second model, cloud, live camera, dashboards, LoR
 - Found and fixed: `networkx 3.7` refuses Python 3.11, so the first rehearsal failed at install. A 3.11-compatible build is now in the bundle.
 - Python 3.12 was not rehearsed. The online install path (empty `bundle/wheels/`) was not run.
 - Timings under QEMU mean nothing and are not recorded here.
-- Counts on two sample photos, people found: 16 (640 FP32), 14 (640 INT8), 9 (480), 7 (320). See `ACCURACY_PLAN.md`.
+- Counts on two sample photos, people found: 16 (640 FP32), 14 (640 INT8), 9 (480), 7 (320). See `EFFICIENCY_PLAN.md`.
