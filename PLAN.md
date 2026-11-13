@@ -100,21 +100,15 @@ Never cut: P1–P3, the Pi benchmark, the 2-minute pitch, the GitHub submission.
 ## Not building
 Tracking, direction/dwell, any second model, cloud, live camera, dashboards, LoRa (only if radios already work and everything above is done).
 
-## Rehearsal results (14 Nov, emulated ARM64 under QEMU, not a Pi)
-Each pass: `bundle/install_pi.sh`, then `run_all.sh` on two sample photos (four models + `fast` and `accurate`), then the tests.
+## Rehearsal results (13-14 Nov, emulated ARM64 under QEMU, not a Pi)
+| Pass | Container | Install | Code | 4 models + 2 profiles | Report | Tests |
+|---|---|---|---|---|---|---|
+| 1 | `python:3.11-slim-bookworm` (Pi OS Bookworm) | offline: pass | `00c24c2` | pass | `report.html` written | all ok except `test_samples_golden` (see below) |
+| 2 | `python:3.13-slim-trixie` | offline: pass | `4020b80` | pass | `report.html` written | same single golden failure |
+| 3 | `python:3.11-slim-bookworm`, empty `bundle/wheels/` (plain `git clone`) | **online: pass** (pinned wheels downloaded, `imports OK, XNNPACK: True`) | `659ef75`+ | pass | written | ok |
 
-| Pass | Container | Install | Code at | Install | Four models + two profiles | Report | Tests |
-|---|---|---|---|---|---|---|---|
-| 1 | `python:3.11-slim-bookworm` (Pi OS Bookworm case) | offline wheels | `00c24c2` | pass | pass | written | 2 of 3 pass, see below |
-| 2 | `python:3.13-slim-trixie` | offline wheels | `4020b80` | pass | pass | written | 2 of 3 pass, see below |
-| 3 | `python:3.11-slim-bookworm` | online (empty `bundle/wheels/`) | `659ef75` | **not finished**: the download under QEMU was still running after 60 minutes and was stopped; no error seen | not run | not run | not run |
-
-- The failing test was `tests/test_samples_golden.py`: it pins the laptop's counts, and on ARM64 the INT8 model counted 4 people on
-  `junction_01` instead of 5. Quantized kernels differ per architecture. The test is now x86-only (`b622b7d`); the lesson is that
-  Pi counts can differ from laptop counts by about one per frame on INT8.
-- In place of pass 3: a native check that the online path (`pip` with the pinned list and the PyTorch CPU index) resolves, for
-  Python 3.11 and for 3.13, to 18 wheels that are byte-identical (SHA-256) to the ones in the offline bundle that passed passes 1 and 2.
-  So the online install puts the same files on the Pi; the only untested part is the download itself on the venue network.
-- Not rehearsed on ARM: `--profile crowd` and `crowd-lite` (added after passes 1 and 2 started), Python 3.12, PDF output (no browser in the containers).
-- An earlier rehearsal (13 Nov) found `networkx 3.7` refusing Python 3.11; a 3.11-compatible build is in the bundle.
-- QEMU timings mean nothing and are not recorded.
+- PDF skipped in all passes: no browser in the container.
+- Failure found: `test_samples_golden` pins x86 INT8 counts; on ARM64 one borderline box flips (brigade_03 12 vs 13 people, junction_01 4/11 vs 5/10). Not a pipeline bug. Fixed in `b622b7d` (the test runs on x86 only); pass 3 ran after it.
+- An earlier attempt at pass 3 printed nothing (the filtered output hid the cause); it was re-run unfiltered and passed.
+- Python 3.12 was not rehearsed. Timings under QEMU mean nothing and are not recorded here.
+- Counts on two sample photos, people found: 16 (640 FP32), 14 (640 INT8), 9 (480), 30 (960). See `EFFICIENCY_PLAN.md`.
