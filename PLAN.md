@@ -102,3 +102,14 @@ Never cut: P1–P3, the Pi benchmark, the 2-minute pitch, the GitHub submission.
 
 ## Not building
 Tracking, direction/dwell, any second model, cloud, live camera, dashboards, LoRa (only if radios already work and everything above is done).
+
+## Rehearsal results (13 Nov, emulated ARM64 under QEMU, not a Pi)
+| Container | Offline install | All 4 models load and count | Report | PDF |
+|---|---|---|---|---|
+| `python:3.11-slim-bookworm` (the Pi OS Bookworm case) | pass | pass | `report.html` written | skipped, no browser in the container |
+| `python:3.13-slim-trixie` | pass | pass | `report.html` written | skipped, no browser in the container |
+
+- Found and fixed: `networkx 3.7` refuses Python 3.11, so the first rehearsal failed at install. A 3.11-compatible build is now in the bundle.
+- Python 3.12 was not rehearsed. The online install path (empty `bundle/wheels/`) was not run.
+- Timings under QEMU mean nothing and are not recorded here.
+- Counts on two sample photos, people found: 16 (640 FP32), 14 (640 INT8), 9 (480), 7 (320). See `ACCURACY_PLAN.md`.
