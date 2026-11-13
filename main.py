@@ -36,6 +36,8 @@ PROFILES = {
                  no_addons=False, smooth=True),   # n only (organiser-approved), tiles only on crowded/small frames: ~half of accurate's time
     "accurate": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="all",
                      deploy=False, no_addons=False, smooth=True),
+    "crowd": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="all", tile_grid=4,
+                  deploy=False, no_addons=False, smooth=True),   # 17 passes per frame: for dense or far-away people
 }
 
 ap = argparse.ArgumentParser()
@@ -67,6 +69,8 @@ ap.add_argument("--no-addons", action="store_true", help="plain counting only")
 ap.add_argument("--blur", action=argparse.BooleanOptionalAction, default=True,
                 help="blur heads in saved frames (default on; --no-blur to disable)")
 ap.add_argument("--deploy", action="store_true", help="write the CSV only, no frames")
+ap.add_argument("--tile-grid", type=int, default=2, choices=[2, 3, 4],
+                help="tiles per side for --tile all/adaptive: 2 = 5 passes, 3 = 10, 4 = 17. Use 4 for crowds and far-away people")
 ap.add_argument("--tile", choices=["off", "auto", "all", "adaptive"], default="off",
                 help="auto: people-only 2x2 when people look small; all: full frame + 4 tiles, all classes; adaptive: tiles only when the full frame looks crowded/small")
 ap.add_argument("--smooth", action="store_true", help="video: rolling median over 5 processed frames")
@@ -143,7 +147,8 @@ def detect(img):
     """(KEEP-class dets, model_ms, passes). Tiling modes run several passes; model_ms is their sum."""
     if a.tile in ("all", "adaptive") and hasattr(det, "raw"):
         cand, ms, passes = runner.tiled_candidates(det, img, min(CP, CV, 0.15) if a.tile == "adaptive" else min(CP, CV),
-                                                   only_if=runner.needs_tiles if a.tile == "adaptive" else None)
+                                                   only_if=runner.needs_tiles if a.tile == "adaptive" else None,
+                                                   grid=a.tile_grid)
         t0 = time.perf_counter()
         d = runner.postprocess(cand, CP, CV, min(a.iou, 0.5), GROUPED, a.min_h, img.shape[0])
         if passes > 1:
@@ -343,7 +348,7 @@ except OSError:
     board = platform.machine() + " (not a Pi)"
 (out / "summary.json").write_text(json.dumps({
     "board": board, "threadpool_threads": THREADS, "cpu_count": os.cpu_count(), "model": pte[0].name, "input": getattr(det, "size", 640), "size_mb": round(size_mb, 2),
-    "profile": a.profile or "custom", "tile": a.tile, "also": a.also, "conf_person": CP, "conf_vehicle": CV, "iou": a.iou,
+    "profile": a.profile or "custom", "tile": a.tile, "tile_grid": a.tile_grid, "also": a.also, "conf_person": CP, "conf_vehicle": CV, "iou": a.iou,
     "grouped_nms": GROUPED, "min_h": a.min_h, "smooth": a.smooth,
     "frames": len(rows), "frames_inferred": n_real, "mean_ms": round(m, 1), "median_ms": round(med, 1),
     "p95_ms": round(p95, 1), "std_ms": round(statistics.pstdev(real), 1), "fps_infer": round(1000 / m, 2),

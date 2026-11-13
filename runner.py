@@ -166,23 +166,27 @@ def needs_tiles(cand, frame_h, conf=0.30, low=(0.15, 0.30), n_low=40, small_h=0.
     return False
 
 
-def tiled_candidates(det, img, floor=0.05, full=None, only_if=None):
-    """One full-frame pass plus four tiles with 20% overlap, all classes. Returns (candidates, ms, passes).
+def tiled_candidates(det, img, floor=0.05, full=None, only_if=None, grid=2):
+    """One full-frame pass plus grid x grid tiles (20% overlap at grid 2, 25% above), all classes.
+    Returns (candidates, ms, passes). grid 2 = 5 passes, 3 = 10, 4 = 17. Finer grids find far and
+    crowded people (Majestic sample: 12 full frame, 23 at grid 2, 58 at grid 4) at that many inferences.
     only_if(full_cand, frame_h) -> bool: skip the tiles (1 pass) when it says no (adaptive tiling)."""
     h, w = img.shape[:2]
-    tw, th = int(w / 2 * 1.2), int(h / 2 * 1.2)
+    ov = 0.2 if grid == 2 else 0.25
+    tw, th = int(w / grid * (1 + ov)), int(h / grid * (1 + ov))
     parts, total = [], 0.0
     c, ms = full if full is not None else det.raw(img, floor); parts.append(c); total += ms
     if only_if is not None and not only_if(c, h):
         return c, total, 1
-    for x0 in (0, w - tw):
-        for y0 in (0, h - th):
+    for i in range(grid):
+        for j in range(grid):
+            x0, y0 = round(i * (w - tw) / (grid - 1)), round(j * (h - th) / (grid - 1))
             (xy, sc, ci), ms = det.raw(img[y0:y0 + th, x0:x0 + tw], floor)
             total += ms
             xy = xy.copy(); xy[:, [0, 2]] += x0; xy[:, [1, 3]] += y0
             parts.append((xy, sc, ci))
     cand = tuple(np.concatenate([p[k] for p in parts]) for k in range(3))
-    return cand, total, 5
+    return cand, total, 1 + grid * grid
 
 
 class UltralyticsDetector:

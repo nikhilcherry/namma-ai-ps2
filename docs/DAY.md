@@ -10,6 +10,7 @@ Pi yet. On the day you run it, count by hand, and fill in numbers.
 | Speed number (deliverable 4) | `--profile fast`: Arm INT8 640, no tiling, no images saved, skips unchanged frames |
 | Submitted counts, report, samples | `--profile accurate`: YOLO11n FP32 640, full frame + 4 tiles, smoothing. If it is too slow on the board: `lite` |
 | Thresholds | defaults (0.30 / 0.30, NMS IoU 0.70). Not tuned: no human counts existed when this was written |
+| Crowded or far-away people | `--profile crowd`: same model, full frame + 16 tiles (17 passes per frame). Majestic sample: 12 people in one pass, 25 with `accurate`, 58 with `crowd`. Adds a few false boxes on close-up traffic |
 | YOLO11s / 11m | not used unless the organisers say yes. `ensemble` uses s: comparison only |
 
 ## 0. First 15 minutes (no building yet)
@@ -65,6 +66,9 @@ Without a zone the report says "Provisional" on its verdict. That is correct, le
 MAIN_MODEL=profile_accurate bash run_all.sh /path/to/clip.mp4 gate --every N --zones zones.json
 ```
 `MAIN_MODEL` decides where the report, the two sample frames and `deliverables/` come from.
+**Look at the boxes before choosing.** If people in the clip are small, far away or packed together and
+many have no box, use `crowd` instead: `python main.py --source <clip> --profile crowd --out out/profile_crowd --every N --zones zones.json`,
+then `MAIN_MODEL=profile_crowd`. It is about 3.5 times slower than `accurate`, so raise `--every`.
 If `accurate` takes too long on this board, edit nothing: run
 `python main.py --source <clip> --profile lite --out out/profile_lite --every N --zones zones.json`
 and use `MAIN_MODEL=profile_lite`.
