@@ -11,14 +11,18 @@ MAIN="${MAIN_MODEL:-yolo11n_raspberry_executorch_optimized}"      # the model th
 OUT="${OUT:-out}"
 
 FAILED=""
-# MODELS="a b" limits the run (e.g. to approved models); default = every .pte in bundle/models
+# Default: the four organiser-approved yolo11n files that matter (INT8 640, FP32 640, FP32 960, FP32 480).
+# MODELS="a b" picks others, MODELS=all runs every .pte in bundle/models (slow on a Pi).
+MODELS="${MODELS:-yolo11n_raspberry_executorch_optimized yolo11n_raspberry_executorch_original yolo11n_fp32_960 yolo11n_fp32_480}"
+T_ALL=$SECONDS
 for pte in bundle/models/*.pte; do
   name="$(basename "$pte" .pte)"
-  [ -z "${MODELS:-}" ] || case " $MODELS " in *" $name "*) ;; *) continue;; esac
-  echo; echo "=== $name ==="
+  [ "$MODELS" = "all" ] || case " $MODELS " in *" $name "*) ;; *) continue;; esac
+  echo; echo "=== $name ==="; T0=$SECONDS
   if ! $PY main.py --source "$SRC" --model "$pte" --out "$OUT/$name" --blur "$@"; then
     echo "!! $name failed on this board, skipping"; FAILED="$FAILED $name"; rm -f "$OUT/$name/summary.json"
   fi
+  echo "(wall time for $name: $((SECONDS - T0)) s)"
 done
 [ -f "$OUT/$MAIN/summary.json" ] || MAIN="yolo11n_raspberry_executorch_original"   # INT8 failed (Pi 4): use FP32
 
@@ -29,7 +33,9 @@ for prof in fast accurate; do
 done
 $PY tools/profile_diff.py "$OUT/profile_fast" "$OUT/profile_accurate" > "$OUT/profiles.md" 2>/dev/null && cat "$OUT/profiles.md" || true
 
-echo; $PY tools/bench_table.py "$OUT" --fill-readme
+# The README table is only filled on a real Pi (or FILL_README=1): laptop numbers must not land in the README.
+FILL=""; { grep -qi "raspberry" /proc/device-tree/model 2>/dev/null || [ "${FILL_README:-}" = "1" ]; } && FILL="--fill-readme"
+echo; $PY tools/bench_table.py "$OUT" $FILL
 $PY tools/report.py "$OUT/$MAIN" --story "$STORY" ${SITE:+--site "$SITE"} || echo "!! report failed (not a deliverable)"
 $PY stamp.py verify "$OUT/$MAIN"
 
@@ -49,6 +55,7 @@ for i, f in enumerate([a, b], 1):
 print(f"samples: {a} (most people), {b} (most vehicles)")
 EOF
 echo
+echo "Total wall time: $((SECONDS - T_ALL)) s. If that is too long, raise --every."
 echo "DONE. Model used for outputs: $MAIN${FAILED:+   FAILED:$FAILED}"
 echo "Safe folder: $D/  ->  now: git add -A && git commit -m 'Pi run' && git push"
 echo "Next: python tools/handcount.py sheet --source \"$SRC\" --run $OUT/$MAIN"

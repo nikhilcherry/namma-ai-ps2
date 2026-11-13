@@ -16,3 +16,5 @@ out/*_det.jpg
 deliverables/*.jpg
 !deliverables/sample_*.jpg
 .stamp_key
+# 77 MB proxy-reference model for the laptop dev tools (sweep --proxy, hybrid_eval, consensus); not shipped to the Pi
+bundle/models/yolo11m_fp32_640.pte
