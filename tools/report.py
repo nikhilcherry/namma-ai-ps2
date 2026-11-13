@@ -138,7 +138,7 @@ figcaption, .n {{ color: #666; font-size: 8.5pt; }} ul {{ margin: 2pt 0; padding
 <h2>Limits</h2>
 <ul><li>Counts per frame, not unique people: the same person is counted in every frame they appear in.</li>
 <li>The road zone and the BUSY/JAMMED cut-offs are set by hand for each site.</li>
-<li>Small or half-hidden people are missed; the error against a human count is stated above when measured.</li></ul>
+<li>Small or half-hidden people are missed; the error against a human count is stated above when measured. Head blur in saved frames covers only detected people, so a missed person is not blurred.</li></ul>
 <h2>What this is for</h2><p>{use}</p>
 <p class="n">Code and raw outputs: {a.repo} · results are hash-chained (stamp.json), head {json.loads((run / 'stamp.json').read_text())['head'][:16]}…</p>
 </body></html>"""

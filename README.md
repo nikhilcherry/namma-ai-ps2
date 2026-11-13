@@ -72,6 +72,7 @@ Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK b
 - The traffic level is box area over a road zone: a relative index, not true density.
 - The zone and the level cut-offs are set by hand and need calibrating per site.
 - Small or half-hidden people are missed; `--tile auto` helps at 4x the inference time.
+- Blur covers only people the model detected: a missed person is not blurred in a saved frame. Use `--deploy` (no frames saved) when that matters.
 
 Models are AGPL-3.0 (Ultralytics / Arm). Sample photos: Wikimedia Commons, credits in `img/raw/meta.json`.
 
