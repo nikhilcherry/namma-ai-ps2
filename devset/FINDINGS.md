@@ -99,3 +99,13 @@ Five independent detectors (n INT8, n FP32, n 960, s, m), full frame, 24 frames.
 * **People: 0.25-0.30 is the agreement minimum, so the current 0.30 default stands.** Above 0.45 the models start disagreeing more.
 * **Vehicles: flat (0.36-0.42), no threshold stands out.** This does *not* support lowering `--conf-vehicle` to 0.20-0.25, which the proxy bias table suggested. The proxy's "undercount" at 0.35 partly reflects the reference running at the same threshold. Default stays 0.30/0.30.
 * Absolute counts swing 3x across thresholds (e.g. vehicles 69 -> 24 for n INT8 from 0.15 to 0.50) and the models differ in total at every threshold (n 69 vs m 103 vehicles at 0.15): the choice of *model* moves the count more than the choice of threshold in 0.25-0.35. Only truth.csv can say which is right.
+
+## Decisions of record (2026-11-13) and when to revisit
+| Decision | Value | Basis | Revisit when |
+|---|---|---|---|
+| Person threshold | 0.30 | cross-model agreement minimum 0.25-0.30 | truth.csv exists: `python tools/sweep.py` |
+| Vehicle threshold | 0.30 | agreement flat 0.15-0.50, no case for a change; proxy bias table is circular | same |
+| NMS | grouped, IoU 0.70 full-frame, 0.50 when tiled | verified: removes the car/truck double count, nothing else changes | same |
+| Submitted-counts profile | `accurate` (n FP32 640, full + 4 tiles); `lite` if time per frame matters | n is the only organiser-approved model | s/m approved: re-run `hybrid_eval.py`, consider `ensemble` |
+| Fast profile | Arm INT8 640 + `--skip-static 0.5` | measured count-diff rule | Pi timings in `bench_hygiene.py` |
+Closing step once counts exist: fill `devset/truth.csv`, run `python tools/sweep.py`; it prints ready-to-paste `main.py` flags per model (`devset/sweep.md`, section "Flags for main.py").

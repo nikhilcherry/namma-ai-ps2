@@ -153,6 +153,11 @@ def main():
             md.append(f"| {m} | {variant} | {r['grouped']} | {r['iou']} | {r['minh']} | {r['cp']} | {r['cv']} | "
                       f"{r['mae_p']:.2f} | {r['mae_v']:.2f} | {r['bias_p']:+.2f}/{r['bias_v']:+.2f} | "
                       f"{r['w2p']}/{len(check)} , {r['w2v']}/{len(check)} |")
+    md += ["", "## Flags for main.py from the winners above" + (" (PROXY: do not adopt)" if proxy else ""), ""]
+    for (m, variant), r in winners.items():
+        tile = {"full": "", "tiled": " --tile all"}[variant]
+        md.append(f"- `{m}` {variant}: `--model bundle/models/{m}.pte --conf-person {r['cp']} --conf-vehicle {r['cv']} "
+                  f"--iou {r['iou']} --min-h {r['minh']}{'' if r['grouped'] else ' --ungrouped'}{tile}`")
     # the untouched legacy setting for comparison
     md += ["", "## Legacy setting (per-class NMS, IoU 0.7, conf 0.30/0.30, min_h 0), same check frames", "",
            "| model | MAE people | MAE vehicles | bias p/v |", "|---|---|---|---|"]
