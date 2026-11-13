@@ -3,6 +3,8 @@
 Replaces `ACCURACY_PLAN.md` and `SPEED_PLAN.md`. Status of everything below: **planned, not built**,
 unless a line says "exists".
 
+> **Status 2026-11-13:** T2, T3, T4, T5, T6, T7, T8 built and pushed; T1 skipped (needs a human); T9 not attempted. Results and caveats: `devset/FINDINGS.md`. Sweep runs in proxy mode until `devset/truth.csv` exists.
+
 ## 1. What we are optimising
 
 | Number | Definition | Measured with |
