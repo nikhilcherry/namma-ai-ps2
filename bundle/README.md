@@ -6,7 +6,9 @@ Everything the Pi needs. No internet needed for Python 3.11, 3.12 or 3.13:
 |---|---|
 | `models/yolo11n_raspberry_executorch_optimized.pte` | Arm YOLO11n **INT8** (4.7 MB), ExecuTorch 1.1.0 |
 | `models/yolo11n_raspberry_executorch_original.pte` | Arm YOLO11n **FP32** (10.2 MB), same export |
-| `models/yolo11n_fp32_480.pte`, `yolo11n_fp32_320.pte` | our FP32 exports at smaller inputs (Ultralytics, ExecuTorch 1.6 export, loads on 1.1.0) |
+| `models/yolo11n_fp32_960.pte`, `yolo11n_fp32_480.pte`, `yolo11n_fp32_320.pte` | our FP32 exports at other inputs (Ultralytics, ExecuTorch 1.6 export, loads on 1.1.0) |
+| `models/yolo11n_int8h_480.pte` | our INT8 at 480 with an FP32 detection head (`tools/quantize.py`); not in the default run |
+| `models/yolo11s_fp32_640.pte` | YOLO11s FP32; **not organiser-approved**, comparison only |
 | `wheels/` | 29 wheels for Python **3.11, 3.12 and 3.13** (546 MB, not in git: copy to USB) |
 | `requirements-pi.txt` | the pinned set `install_pi.sh` installs |
 | `SHA256SUMS` | checksums of the wheels |

@@ -20,8 +20,8 @@ mode it stores no images at all (frames we do save blur the heads it detects). O
 small and half-hidden people, and it reads autos as cars or trucks, so we report one vehicle total.
 
 **1:20 On the Pi.** [Pi model]: [N] ms per frame, [N] frames per second, a [N] MB model, [N] MB of
-RAM. We measured four model variants on this board and chose [variant] because [it is N times faster
-and differs by N people per frame].
+RAM. That is our fast setting. It differs from our accurate setting by [N] people per frame, so the
+counts in our report come from the accurate one, at [N] ms per frame.
 
 **1:40 What it is for.** Leave this box at a gate for a week. The ward engineer gets one page:
 this gate needs a marshal from 8:30 to 8:50, or it does not. Same box, any gate, about [₹ price].
@@ -43,8 +43,8 @@ average of [N], and the road was busy or jammed in [N]% of frames.
 autos as cars or trucks, so we report one vehicle total and say so.
 
 **1:20 On the Pi.** [Pi model]: [N] ms per frame, [N] frames per second, a [N] MB model, [N] MB of
-RAM. We measured four model variants on this board and chose [variant] because [it is N times faster
-and differs by N vehicles per frame].
+RAM. That is our fast setting. It differs from our accurate setting by [N] vehicles per frame, so the
+counts in our report come from the accurate one, at [N] ms per frame.
 
 **1:40 What it is for.** Leave this box at an approach for a week. The traffic engineer gets one
 page: when the queue fills the road, and whether the green time should change. About [₹ price] per

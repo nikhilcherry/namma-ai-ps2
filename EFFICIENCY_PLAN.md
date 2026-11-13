@@ -1,9 +1,20 @@
 # Efficiency plan: the most accurate counts and the most frames per second this pipeline can give
 
-Replaces `ACCURACY_PLAN.md` and `SPEED_PLAN.md`. Status of everything below: **planned, not built**,
-unless a line says "exists".
+Replaces `ACCURACY_PLAN.md` and `SPEED_PLAN.md`. The task descriptions below are the original plan;
+what was actually built is in the status table here, and the measurements are in `devset/FINDINGS.md`.
 
-> **Status 2026-11-13:** T2, T3, T4, T5, T6, T7, T8 built and pushed; T1 skipped (needs a human); T9 not attempted. Results and caveats: `devset/FINDINGS.md`. Sweep runs in proxy mode until `devset/truth.csv` exists.
+| Task | Status at end of 13 Nov |
+|---|---|
+| T1 dev set | 24 frames prepared, **not hand-counted**. Decision: skip it; the 10 frames of the organiser's clip are the accuracy check (`docs/DAY.md` step 7) |
+| T2 sweep | built (`tools/sweep.py`); only ever run against a proxy model, so defaults were not changed |
+| T3 post-processing | built: grouped NMS (default), `--conf-person`, `--conf-vehicle`, `--iou`, `--min-h`, optional count polygon |
+| T4 more pixels | built: tiling for all classes (`accurate`), adaptive tiling (`lite`), FP32 960 export (`balanced`) |
+| T5 larger models | s and m exported; s is in the bundle, m is laptop-only (77 MB). Not approved by the organisers |
+| T6 rolling median | built, on in the smoothing profiles |
+| T7 less work per frame | built: `grab()` skipping, resize before colour conversion, `--profile` |
+| T8 skip static frames | built, in `fast` at threshold 0.5 |
+| T9 INT8 at 480 | built with an FP32 head; about equal to FP32 480 on accuracy, speed unknown; not in the default run |
+| Section 4 (M1–M5) | all of it needs the Pi; commands are in `docs/DAY.md` |
 
 ## 1. What we are optimising
 

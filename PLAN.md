@@ -1,3 +1,5 @@
+> **Tomorrow, follow `docs/DAY.md`.** This file is the background plan; `TODO.md` lists what is still open.
+
 # PS2 plan: edge people & vehicle counter (Namma AI Hackathon, 14 Nov 2026)
 
 Offline counting of people and vehicles on a Raspberry Pi with ExecuTorch. Judged on a working PoC,
@@ -26,13 +28,13 @@ Status: DONE = built and tested on the laptop, TODO = not built, PI = needs a te
 
 | Part | What | Files | Status |
 |---|---|---|---|
-| **P0 Repo + bundle** | git repo, 4 `.pte` (Arm INT8 + FP32 at 640, our FP32 at 480 and 320), offline aarch64 wheels for Py 3.11/3.12/3.13, install script | `bundle/`, `bundle/install_pi.sh` | DONE · rehearsed on emulated ARM64 (see below) · real Pi untested |
+| **P0 Repo + bundle** | git repo, 7 `.pte` (Arm INT8 + FP32 at 640; ours: FP32 at 960, 480, 320, INT8 480 with FP32 head, YOLO11s FP32), offline aarch64 wheels for Py 3.11/3.12/3.13, install script | `bundle/`, `bundle/install_pi.sh` | DONE · rehearsed on emulated ARM64 (see below) · real Pi untested |
 | **P1 Ingest** | Image folder or video, frame sampling (`--every`), warm-up frame | `main.py` | DONE |
 | **P2 Inference** | Thin ExecuTorch runner (no ultralytics), Arm pre/post-processing, INT8 and FP32 | `runner.py` | DONE · PI |
 | **P3 Count + CSV** | Per-frame counts for 6 classes, merged `vehicle`, CSV, annotated frames | `main.py` | DONE |
 | **P4 Insights** | Congestion score, crowd level, pedestrians on road (riders excluded), 2×2 tiling when people are small, browser zone picker | `insights.py`, `tools/zones.py` | DONE |
 | **P5 Privacy** | Head blur in saved frames, `--deploy` writes CSV only | `insights.py`, `main.py` | DONE |
-| **P6 Benchmark** | mean / median / p95 / std ms, FPS (inference and end to end), model MB, peak RAM, all 4 models side by side with count differences | `main.py`, `run_all.sh`, `tools/bench_table.py` | DONE · **numbers must be measured on the Pi** |
+| **P6 Benchmark** | mean / median / p95 / std ms, FPS (inference and end to end), model MB, peak RAM, four default models side by side with count differences, plus fast vs accurate profiles | `main.py`, `run_all.sh`, `tools/bench_table.py` | DONE · **numbers must be measured on the Pi** |
 | **P7 Integrity** | Hash chain over the CSV, model + input SHA-256, `stamp.py verify` | `stamp.py` | DONE |
 | **P8 Accuracy check** | 10 clean frames, a human fills the CSV, model-vs-human table | `tools/handcount.py` | DONE (tool) · counting happens on the day |
 | **P9 Story + outputs** | One-page site report (gate or junction story) with heatmap, two pitch scripts, live photo page | `tools/report.py`, `tools/live.py`, `docs/pitch.md` | DONE · **approach PDF fixes still TODO** |
@@ -46,12 +48,7 @@ Status: DONE = built and tested on the laptop, TODO = not built, PI = needs a te
 | **C: Evidence + pitch** | P8 hand-count, P9 sample outputs, P10 GitHub + form, delivers the 2-minute pitch |
 
 ## Before the event (what is left)
-1. Push to GitHub: done if `git remote -v` shows a remote.
-2. USB stick: the whole repo folder including `bundle/wheels/` (not in git). Repo on a phone too.
-3. Send the organisers: which Pi, is the OS 64-bit, which Python, how the clip is delivered, is a live demo allowed.
-4. Put names on the team table and in `docs/submission.md`.
-5. Fix the approach PDF (section order, "children" → "people", the "6 riders" line, bicycle in the vehicle total, board price, end-to-end FPS, an accuracy line, faces blurred).
-6. Read `docs/DAY.md` once, and read one pitch script aloud with a timer.
+See `TODO.md`. In short: team names, the two unsourced pitch lines, the approach PDF, and one read of `docs/DAY.md`.
 
 ## Rehearsal on emulated ARM64 (13 Nov)
 `bundle/install_pi.sh` + `run_all.sh` were run inside `linux/arm64` Docker containers under QEMU.

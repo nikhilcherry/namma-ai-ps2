@@ -11,7 +11,8 @@ bash bundle/install_pi.sh                          # offline for Python 3.11 / 3
 bash run_all.sh <clip.mp4 | image folder> gate     # or: junction.  Add --every 3, --zones zones.json
 ```
 
-`run_all.sh` runs every model in `bundle/models/` on the same frames and writes:
+`run_all.sh` runs four YOLO11n models (`MODELS=all` for every file in `bundle/models/`) and the `fast` and
+`accurate` profiles on the same frames and writes:
 
 | Output | What |
 |---|---|
@@ -54,7 +55,8 @@ _Filled on the day from `handcount/accuracy.md`._
 | `yolo11n_raspberry_executorch_optimized.pte` | YOLO11n INT8, 640 input, 4.7 MB | Arm (`Arm/yolo11n-int8-xnnpack-executorch-raspberrypi5`) |
 | `yolo11n_raspberry_executorch_original.pte` | YOLO11n FP32, 640 input, 10.2 MB | Arm, same export |
 | `yolo11n_fp32_480.pte`, `yolo11n_fp32_320.pte` | YOLO11n FP32 at smaller inputs | our export with Ultralytics, ExecuTorch/XNNPACK |
-| `yolo11n_fp32_960.pte`, `yolo11s_fp32_640.pte`, `yolo11m_fp32_640.pte` | larger input / larger models for the accurate profile (s and m need organiser approval before use for submitted counts) | our export with Ultralytics |
+| `yolo11n_fp32_960.pte`, `yolo11s_fp32_640.pte` | larger input / larger model (s needs organiser approval before use for submitted counts; the m export is laptop-only, not in git) | our export with Ultralytics |
+| `yolo11n_int8h_480.pte` | our INT8 at 480 with an FP32 head; not in the default run | `tools/quantize.py` |
 
 Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK backend, CPU only.
 `runner.py` is a thin runner (no Ultralytics on the Pi) and reads the input size from the `.pte`.
@@ -78,7 +80,7 @@ Models are AGPL-3.0 (Ultralytics / Arm). Sample photos: Wikimedia Commons, credi
 
 ## Profiles, flags and tools added by the efficiency pass (see EFFICIENCY_PLAN.md, devset/FINDINGS.md)
 
-| `--profile` | recipe | laptop ms/frame |
+| `--profile` | recipe | ms/frame on the **laptop** (not a Pi) |
 |---|---|---|
 | `fast` | Arm INT8 640, no images, skips unchanged frames (`--skip-static 0.5`) | ~90 when inferring |
 | `balanced` | yolo11n FP32 960, one pass, smoothing | ~110 |

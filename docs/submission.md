@@ -18,9 +18,10 @@ turns the counts into a one-page report that tells a ward engineer whether a spo
 
 **Sample outputs (deliverable 3):** `deliverables/sample_1_*.jpg`, `deliverables/sample_2_*.jpg`
 
-**Performance on the Pi (deliverable 4):** board [Pi model, RAM, OS]. Model [variant], [N] MB.
+**Performance on the Pi (deliverable 4):** board [Pi model, RAM, OS]. Fast profile: YOLO11n INT8 640, 4.7 MB.
 Average inference [N] ms (median [N], p95 [N]). Throughput [N] FPS inference only, [N] FPS end to
-end. Peak RAM [N] MB. Full table for four model variants: `deliverables/benchmark.md`.
+end. Peak RAM [N] MB. Full table for four model variants: `deliverables/benchmark.md`. Fast vs accurate: `deliverables/profiles.md`.
+The submitted counts come from the accurate profile (YOLO11n FP32 640, full frame + 4 tiles): [N] ms per frame.
 
 **Model used:** YOLO11n (Ultralytics, COCO pretrained), ExecuTorch `.pte`, XNNPACK backend, CPU only.
 INT8 and FP32 640 exports from Arm; FP32 480 and 320 exported by us.
