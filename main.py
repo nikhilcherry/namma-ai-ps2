@@ -62,8 +62,8 @@ ap.add_argument("--no-addons", action="store_true", help="plain counting only")
 ap.add_argument("--blur", action=argparse.BooleanOptionalAction, default=True,
                 help="blur heads in saved frames (default on; --no-blur to disable)")
 ap.add_argument("--deploy", action="store_true", help="write the CSV only, no frames")
-ap.add_argument("--tile", choices=["off", "auto", "all"], default="off",
-                help="auto: people-only 2x2 when people look small; all: full frame + 4 tiles, all classes")
+ap.add_argument("--tile", choices=["off", "auto", "all", "adaptive"], default="off",
+                help="auto: people-only 2x2 when people look small; all: full frame + 4 tiles, all classes; adaptive: tiles only when the full frame looks crowded/small")
 ap.add_argument("--smooth", action="store_true", help="video: rolling median over 5 processed frames")
 ap.add_argument("--skip-static", type=float, nargs="?", const=0.5, default=0.0, metavar="MAD",
                 help="fixed camera: reuse the last counts if mean abs diff of a 160x90 grey copy is below MAD "
@@ -86,6 +86,7 @@ det2 = runner.load(a.also, a.backend) if a.also else None
 is_video = not src.is_dir()
 if a.smooth and not is_video:
     a.smooth = False                       # never smooth a folder of unrelated images
+TILE_STATS = []
 T = {"decode": 0.0, "pre": 0.0, "infer": 0.0, "post": 0.0, "addons": 0.0, "save": 0.0}
 
 
@@ -131,12 +132,15 @@ def frames():
 
 def detect(img):
     """(KEEP-class dets, model_ms, passes). Tiling modes run several passes; model_ms is their sum."""
-    if a.tile == "all" and hasattr(det, "raw"):
-        cand, ms, passes = runner.tiled_candidates(det, img, min(CP, CV))
+    if a.tile in ("all", "adaptive") and hasattr(det, "raw"):
+        cand, ms, passes = runner.tiled_candidates(det, img, min(CP, CV, 0.15) if a.tile == "adaptive" else min(CP, CV),
+                                                   only_if=runner.needs_tiles if a.tile == "adaptive" else None)
         t0 = time.perf_counter()
         d = runner.postprocess(cand, CP, CV, min(a.iou, 0.5), GROUPED, a.min_h, img.shape[0])
-        d = runner.containment_filter(d)
+        if passes > 1:
+            d = runner.containment_filter(d)
         T["post"] += time.perf_counter() - t0
+        TILE_STATS.append(passes)
         return [x for x in d if x[0] in KEEP], ms, passes
     dets, ms = _plain(img)
     return [d for d in dets if d[0] in KEEP], ms, 1

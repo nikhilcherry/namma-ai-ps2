@@ -75,3 +75,11 @@ Proxy-reference error on the 8 check frames, legacy setting (conf 0.30, IoU 0.7)
 
 ## M1 open point answered: thread count (ExecuTorch 1.1.0 Python)
 `executorch.extension.pybindings._portable_lib._threadpool_get_thread_count()` exists and reports the XNNPACK pthreadpool size (16 on the 16-core laptop, i.e. all cores). `main.py` now prints it and writes `threadpool_threads` / `cpu_count` to `summary.json`; `tools/pi_check.sh` prints it. On the Pi it should say 4 of 4; anything lower is the "only 1-2 cores busy" case. A setter is not exposed in Python (only `_unsafe_reset_threadpool`), so a low value cannot be fixed from our code.
+
+## Adaptive tiling (`--tile adaptive`)
+Run the full frame first; add the four tiles only if `runner.needs_tiles` fires (>= 40 borderline candidates scoring 0.15-0.30, or median person height < 10% of the frame). yolo11n FP32 640, 24 dev frames, laptop:
+| | tiled frames | mean ms | vs `--tile all` |
+|---|---|---|---|
+| `--tile all` | 24 of 24 | 457 | reference |
+| `--tile adaptive` | 10 of 24 | **232** | differs on 4 frames: sum abs diff 8 people, 5 vehicles |
+The four differing frames: c02 and c05 (near-empty scenes where tiling adds a person: probably tile false positives), c01 (4 vs 3 people, 6 vs 3 vehicles), c08 (tiles find 4 small people the full pass misses). The trigger was read off these same 24 frames, so it is a starting point, not a validated rule; the dev set is also crowd-heavy, so on sparse real footage the saving should be larger. Accuracy of either mode is still unmeasured without truth.csv.

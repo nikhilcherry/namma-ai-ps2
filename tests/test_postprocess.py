@@ -67,6 +67,18 @@ def test_count_region_uses_foot_point():
     assert insights.in_region([inside, outside], None) == [inside, outside]
 
 
+def test_needs_tiles_trigger():
+    H = 1000
+    empty = cand([])
+    assert not runner.needs_tiles(empty, H)
+    crowd = cand([(i * 10, 0, i * 10 + 5, 50, .2, PERSON) for i in range(45)])      # 45 borderline boxes
+    assert runner.needs_tiles(crowd, H)
+    tiny = cand([(0, 0, 10, 40, .9, PERSON)])                                       # person 4% of frame height
+    assert runner.needs_tiles(tiny, H)
+    big = cand([(0, 0, 100, 500, .9, PERSON), (200, 0, 300, 400, .9, CAR)])         # large objects, sparse
+    assert not runner.needs_tiles(big, H)
+
+
 if __name__ == "__main__":
     fails = 0
     for k, f in sorted(globals().items()):

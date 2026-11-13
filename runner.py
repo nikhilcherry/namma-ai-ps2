@@ -135,12 +135,28 @@ def containment_filter(dets, thr=0.7):
 GROUP_BY_NAME = {NAMES[k]: v for k, v in GROUP.items()}
 
 
-def tiled_candidates(det, img, floor=0.05):
-    """One full-frame pass plus four tiles with 20% overlap, all classes. Returns (candidates, ms, passes)."""
+def needs_tiles(cand, frame_h, conf=0.30, low=(0.15, 0.30), n_low=40, small_h=0.10):
+    """Adaptive trigger from the full-frame candidates: many borderline boxes (crowd / small objects) or small
+    people. Rule read off the 24 dev frames (devset/FINDINGS.md): treat as a starting point, not a tuned value."""
+    xyxy, score, cid = cand
+    if int(((score > low[0]) & (score < low[1])).sum()) >= n_low:
+        return True
+    pm = (cid == 0) & (score >= conf)
+    if pm.any():
+        hs = (xyxy[pm, 3] - xyxy[pm, 1]) / frame_h
+        return float(np.median(hs)) < small_h
+    return False
+
+
+def tiled_candidates(det, img, floor=0.05, full=None, only_if=None):
+    """One full-frame pass plus four tiles with 20% overlap, all classes. Returns (candidates, ms, passes).
+    only_if(full_cand, frame_h) -> bool: skip the tiles (1 pass) when it says no (adaptive tiling)."""
     h, w = img.shape[:2]
     tw, th = int(w / 2 * 1.2), int(h / 2 * 1.2)
     parts, total = [], 0.0
-    c, ms = det.raw(img, floor); parts.append(c); total += ms
+    c, ms = full if full is not None else det.raw(img, floor); parts.append(c); total += ms
+    if only_if is not None and not only_if(c, h):
+        return c, total, 1
     for x0 in (0, w - tw):
         for y0 in (0, h - th):
             (xy, sc, ci), ms = det.raw(img[y0:y0 + th, x0:x0 + tw], floor)
