@@ -83,3 +83,19 @@ Run the full frame first; add the four tiles only if `runner.needs_tiles` fires 
 | `--tile all` | 24 of 24 | 457 | reference |
 | `--tile adaptive` | 10 of 24 | **232** | differs on 4 frames: sum abs diff 8 people, 5 vehicles |
 The four differing frames: c02 and c05 (near-empty scenes where tiling adds a person: probably tile false positives), c01 (4 vs 3 people, 6 vs 3 vehicles), c08 (tiles find 4 small people the full pass misses). The trigger was read off these same 24 frames, so it is a starting point, not a validated rule; the dev set is also crowd-heavy, so on sparse real footage the saving should be larger. Accuracy of either mode is still unmeasured without truth.csv.
+
+## Threshold choice without truth: cross-model agreement (`tools/consensus.py`)
+Five independent detectors (n INT8, n FP32, n 960, s, m), full frame, 24 frames. Metric: mean pairwise |count difference| per frame, divided by the mean count (lower = the models agree more). Consistency, not accuracy: the models can share blind spots.
+| threshold | people | vehicles |
+|---|---|---|
+| 0.15 | 0.35 | 0.36 |
+| 0.20 | 0.35 | 0.42 |
+| 0.25 | 0.32 | 0.39 |
+| **0.30** | **0.32** | **0.36** |
+| 0.35 | 0.36 | 0.39 |
+| 0.40 | 0.34 | 0.40 |
+| 0.45 | 0.40 | 0.40 |
+| 0.50 | 0.42 | 0.41 |
+* **People: 0.25-0.30 is the agreement minimum, so the current 0.30 default stands.** Above 0.45 the models start disagreeing more.
+* **Vehicles: flat (0.36-0.42), no threshold stands out.** This does *not* support lowering `--conf-vehicle` to 0.20-0.25, which the proxy bias table suggested. The proxy's "undercount" at 0.35 partly reflects the reference running at the same threshold. Default stays 0.30/0.30.
+* Absolute counts swing 3x across thresholds (e.g. vehicles 69 -> 24 for n INT8 from 0.15 to 0.50) and the models differ in total at every threshold (n 69 vs m 103 vehicles at 0.15): the choice of *model* moves the count more than the choice of threshold in 0.25-0.35. Only truth.csv can say which is right.
