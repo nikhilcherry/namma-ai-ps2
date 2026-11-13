@@ -9,8 +9,8 @@ measured on the Pi. Each script is about 230 words: 1:45 at a normal pace, which
 traffic marshal usually depends on who complains, not on a count. [Check this line with a mentor or cite a source.]
 
 **0:20 What we built.** This Raspberry Pi counts people and vehicles from a camera view, fully
-offline, with a YOLO11n model on ExecuTorch. No cloud, no internet, faces blurred, and in deploy
-mode it stores no images at all. Only numbers leave the box.
+offline, with a YOLO11n model on ExecuTorch. No cloud, no internet, and in deploy
+mode it stores no images at all (frames we do save blur the heads it detects). Only numbers leave the box.
 
 **0:45 Result on your clip.** On the clip you gave us it found a peak of [N] people in view and
 [N] pedestrians on the road itself, with traffic busy in [N]% of frames.
@@ -32,8 +32,8 @@ this gate needs a marshal from 8:30 to 8:50, or it does not. Same box, any gate,
 Re-timing needs a count, and a manual count costs a person a day. [Check this line with a mentor or cite a source.]
 
 **0:20 What we built.** This Raspberry Pi counts vehicles and people from a camera view, fully
-offline, with a YOLO11n model on ExecuTorch. No cloud, no internet, faces blurred, and in deploy
-mode it stores no images at all. Only numbers leave the box.
+offline, with a YOLO11n model on ExecuTorch. No cloud, no internet, and in deploy
+mode it stores no images at all (frames we do save blur the heads it detects). Only numbers leave the box.
 
 **0:45 Result on your clip.** On the clip you gave us it saw a peak of [N] vehicles in view, an
 average of [N], and the road was busy or jammed in [N]% of frames.
