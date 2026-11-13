@@ -79,7 +79,7 @@ T = {"decode": 0.0, "pre": 0.0, "infer": 0.0, "post": 0.0, "addons": 0.0, "save"
 
 def frames():
     """Yield (name, t_seconds, BGR image). Folder: stills, video: sampled frames.
-    Frames that --every drops are only grab()bed, never decoded to an image."""
+    Frames that --every drops are only grab()bed: the codec still decodes them, but no image is retrieved or colour-converted."""
     if src.is_dir():
         for i, f in enumerate(sorted(p for p in src.iterdir() if p.suffix.lower() in IMG)):
             t0 = time.perf_counter(); img = cv2.imread(str(f)); T["decode"] += time.perf_counter() - t0

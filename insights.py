@@ -28,15 +28,35 @@ def zone_mask(zone, w, h):
     return m
 
 
-def occupancy(dets, zmask):
-    """Share of the road zone covered by vehicle boxes (overlaps count once)."""
-    h, w = zmask.shape
+_SMALL = {}
+
+
+def _small_mask(zmask, width=320):
+    """Road mask shrunk to ~320 px wide, cached by the mask object (built once per frame size)."""
+    k = id(zmask)
+    if k not in _SMALL:
+        h, w = zmask.shape
+        sc = min(1.0, width / w)
+        _SMALL.clear()
+        _SMALL[k] = (sc, cv2.resize(zmask, (max(1, round(w * sc)), max(1, round(h * sc))),
+                                    interpolation=cv2.INTER_NEAREST), zmask)   # keep zmask alive so id stays valid
+    return _SMALL[k][:2]
+
+
+def occupancy(dets, zmask, exact=False):
+    """Share of the road zone covered by vehicle boxes (overlaps count once).
+    Computed on a ~320 px wide copy; exact=True uses full resolution (tools/check_occupancy.py compares them)."""
+    if exact:
+        sc, m = 1.0, zmask
+    else:
+        sc, m = _small_mask(zmask)
+    h, w = m.shape
     paint = np.zeros((h, w), np.uint8)
     for name, _, (x1, y1, x2, y2) in dets:
         if name in VEHICLES:
-            paint[max(0, int(y1)):int(y2), max(0, int(x1)):int(x2)] = 1
-    area = int(zmask.sum())
-    return float((paint & zmask).sum()) / area if area else 0.0
+            paint[max(0, int(y1 * sc)):int(y2 * sc), max(0, int(x1 * sc)):int(x2 * sc)] = 1
+    area = int(m.sum())
+    return float((paint & m).sum()) / area if area else 0.0
 
 
 def traffic_level(occ):
