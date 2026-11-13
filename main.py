@@ -51,7 +51,8 @@ ap.add_argument("--min-h", type=float, default=0.0, help="drop boxes shorter tha
 ap.add_argument("--every", type=int, default=1, help="video: use every Nth frame")
 ap.add_argument("--zones", default=None, help="JSON with a normalised 'road' polygon, optional 'count' polygon")
 ap.add_argument("--no-addons", action="store_true", help="plain counting only")
-ap.add_argument("--blur", action="store_true", help="blur heads in saved frames")
+ap.add_argument("--blur", action=argparse.BooleanOptionalAction, default=True,
+                help="blur heads in saved frames (default on; --no-blur to disable)")
 ap.add_argument("--deploy", action="store_true", help="write the CSV only, no frames")
 ap.add_argument("--tile", choices=["off", "auto", "all"], default="off",
                 help="auto: people-only 2x2 when people look small; all: full frame + 4 tiles, all classes")

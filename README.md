@@ -57,7 +57,7 @@ Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK b
 - **Road zone:** a polygon drawn once per camera view (`zones.json`).
 - **Traffic level:** share of the road zone covered by vehicle boxes: FREE < 25%, BUSY < 50%, JAMMED above.
 - **Pedestrians on the road:** people whose foot point is inside the zone, excluding riders (a person box mostly inside a two-wheeler box).
-- **Privacy:** the top quarter of every person box is blurred in saved frames; `--deploy` saves no frames.
+- **Privacy:** the top quarter of every detected person box is blurred in saved frames (default; `--no-blur` disables); `--deploy` saves no frames.
 - **Integrity:** every CSV row is hash-chained with the model and input hashes (`stamp.json`).
 
 ## Limits

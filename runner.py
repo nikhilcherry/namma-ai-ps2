@@ -46,22 +46,24 @@ class ExecutorchDetector:
         from executorch.runtime import Runtime
         self.torch, self.iou = torch, iou
         self.method = Runtime.get().load_program(str(pte)).load_method("forward")
-        try:                                   # square input side, read from the .pte itself
-            self.size = int(self.method.metadata.input_tensor_meta(0).sizes()[-1])
+        try:                                   # input H and W, read from the .pte itself (rectangular ok)
+            sz = self.method.metadata.input_tensor_meta(0).sizes()
+            self.hw = (int(sz[-2]), int(sz[-1]))
         except Exception:
-            self.size = 640
+            self.hw = (640, 640)
+        self.size = max(self.hw)
 
     def raw(self, img_bgr, floor=0.05):
         """Raw candidates above `floor` before NMS: ((xyxy, score, cid), inference_ms). Pixels of img_bgr."""
         t_in = time.perf_counter()
         h0, w0 = img_bgr.shape[:2]
-        S = self.size
-        s = min(S / w0, S / h0)
+        SH, SW = self.hw
+        s = min(SW / w0, SH / h0)
         nw, nh = round(w0 * s), round(h0 * s)
         # resize first, colour-convert the small image (not the full 1080p frame)
         small = cv2.cvtColor(cv2.resize(img_bgr, (nw, nh), interpolation=cv2.INTER_LINEAR), cv2.COLOR_BGR2RGB)
-        canvas = np.full((S, S, 3), 114, np.uint8)
-        px, py = (S - nw) // 2, (S - nh) // 2
+        canvas = np.full((SH, SW, 3), 114, np.uint8)
+        px, py = (SW - nw) // 2, (SH - nh) // 2
         canvas[py:py + nh, px:px + nw] = small
         x = self.torch.from_numpy(canvas).permute(2, 0, 1).unsqueeze(0).float().div_(255).contiguous()
         t0 = time.perf_counter()
