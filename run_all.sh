@@ -24,7 +24,6 @@ for pte in bundle/models/*.pte; do
   fi
   echo "(wall time for $name: $((SECONDS - T0)) s)"
 done
-[ -f "$OUT/$MAIN/summary.json" ] || MAIN="yolo11n_raspberry_executorch_original"   # INT8 failed (Pi 4): use FP32
 
 # The two profiles of EFFICIENCY_PLAN.md, run on the same clip: fast = the FPS figure, accurate = the submitted counts.
 for prof in fast accurate; do
@@ -32,6 +31,8 @@ for prof in fast accurate; do
   $PY main.py --source "$SRC" --profile $prof --out "$OUT/profile_$prof" "$@" || echo "!! profile $prof failed"
 done
 $PY tools/profile_diff.py "$OUT/profile_fast" "$OUT/profile_accurate" > "$OUT/profiles.md" 2>/dev/null && cat "$OUT/profiles.md" || true
+# MAIN_MODEL may be a model name or a profile run (MAIN_MODEL=profile_accurate): report, samples and deliverables come from it.
+[ -f "$OUT/$MAIN/summary.json" ] || { echo "!! $MAIN did not run on this board -> using the FP32 640 run for outputs"; MAIN="yolo11n_raspberry_executorch_original"; }
 
 # The README table is only filled on a real Pi (or FILL_README=1): laptop numbers must not land in the README.
 FILL=""; { grep -qi "raspberry" /proc/device-tree/model 2>/dev/null || [ "${FILL_README:-}" = "1" ]; } && FILL="--fill-readme"
@@ -40,7 +41,7 @@ $PY tools/report.py "$OUT/$MAIN" --story "$STORY" ${SITE:+--site "$SITE"} || ech
 $PY stamp.py verify "$OUT/$MAIN"
 
 D=deliverables; mkdir -p "$D"
-cp "$OUT/benchmark.md" "$D/"
+cp "$OUT/benchmark.md" "$D/"; cp "$OUT/profiles.md" "$D/" 2>/dev/null || true
 cp "$OUT/$MAIN/counts.csv" "$OUT/$MAIN/summary.txt" "$OUT/$MAIN/summary.json" "$OUT/$MAIN/stamp.json" "$D/"
 cp "$OUT/$MAIN"/report.* "$OUT/$MAIN/heatmap.jpg" "$D/" 2>/dev/null || true
 # two sample outputs: the frame with most people and the frame with most vehicles
