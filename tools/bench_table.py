@@ -21,7 +21,7 @@ def counts(d):
         return {r["frame"]: (int(r["person"]), int(r["vehicle"])) for r in csv.DictReader(f)}
 
 
-runs = sorted(p.parent for p in root.glob("*/summary.json"))
+runs = sorted(p.parent for p in root.glob("*/summary.json") if not p.parent.name.startswith("profile_"))   # profiles go in profiles.md
 if not runs:
     raise SystemExit(f"no runs found under {root}/")
 ref = counts(root / a.ref) if (root / a.ref / "counts.csv").exists() else None
