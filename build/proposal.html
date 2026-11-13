@@ -160,7 +160,7 @@
 
   <figure style="margin-top:4mm">
     <div class="pair"><img src="../img/out/c04_det.jpg" alt=""><img src="../img/out/c00_det.jpg" alt=""></div>
-    <figcaption><b>Fig. 2.</b> Two sample outputs. Left, Brigade Road: 13 people and 2 cars. Right, Egipura signal at dusk: 6 riders, 4 cars and 1 bus. The model still works in low light, but the lower confidence scores (0.3–0.5) show where its limits are.</figcaption>
+    <figcaption><b>Fig. 2.</b> Two sample outputs. Left, Brigade Road: 13 people and 2 cars. Right, Egipura signal at dusk: 6 people, 4 cars and 1 bus. The model still works in low light, but the lower confidence scores (0.3–0.5) show where its limits are.</figcaption>
   </figure>
 
   <div class="foot"><span>PS2 · Edge-based object detection and counting</span><span>2 / 4</span></div>
@@ -199,7 +199,7 @@
   </ol>
 
   <h2><span class="n">07</span>One practical application</h2>
-  <p><b>School-zone crossing counts.</b> A Pi mounted at a school gate counts children and two-wheelers at the crossing between 8 and 9 a.m. A week of numbers is enough to show the ward engineer or traffic police that the crossing needs a marshal, a speed table or a longer pedestrian phase. The video never leaves the box and no faces are stored, so the school can install it without a privacy argument. Junctions, bus stands and market streets follow the same pattern: one device, one CSV.</p>
+  <p><b>School-zone crossing counts.</b> A Pi mounted at a school gate counts people (the model cannot tell children from adults) and two-wheelers at the crossing between 8 and 9 a.m. A week of numbers is enough to show the ward engineer or traffic police that the crossing needs a marshal, a speed table or a longer pedestrian phase. The video never leaves the box and in deploy mode no frames are stored at all (in saved frames, detected heads are blurred), so the school can install it without a privacy argument. Junctions, bus stands and market streets follow the same pattern: one device, one CSV.</p>
 
   <div class="foot"><span>PS2 · Edge-based object detection and counting</span><span>3 / 4</span></div>
 </section>
