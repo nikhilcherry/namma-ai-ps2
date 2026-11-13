@@ -129,7 +129,7 @@ No human counts exist, so "better" below means "more boxes that look right when 
 | SAHI's merge step (GreedyNMM, intersection over smaller, union box) | counts within 1–3 of our NMS + containment filter; union boxes grow large on overlapping vehicles | not adopted, no gain |
 | Soft-NMS (Bodla et al. 2017), Gaussian, σ 0.5 and 0.3 | Majestic 58 → 70 but with visible double boxes on single people; junction vehicles 17 → 29 (duplicates) | **rejected** |
 | Crowd-trained detector (CrowdHuman; third-party YOLO11s person + head ONNX, `Sharath33/Person`, openrail++) | Majestic people: 39 in one pass, 68 with 5 passes, 97 with 17 (61 heads). Brigade 56, junction 22. Opened and checked: it covers the packed crowd our model misses, with some overlap duplicates | **evidence only**: s-size, ONNX (not ExecuTorch), not ours, not organiser-approved. It shows the real fix is crowd-trained weights, not more tiling |
-| Density-map counters (DM-Count / CSRNet via `lwcc`) | see the next section if it finished | evidence only: a second model outside the YOLO11n approval |
+| Density-map counters (pretrained DM-Count and CSRNet via the `lwcc` library, run in an isolated container) | DM-Count (ShanghaiTech A weights): Majestic 58, Brigade 57, junction 20. CSRNet (ShanghaiTech B weights): 90, 129, 61. The two disagree by up to 3×, and 61 people at the junction is plainly wrong | **rejected**: untrustworthy without calibration on our own scenes, heavy (VGG backbones), and a second model outside the YOLO11n approval |
 
 What this means for the day: `crowd` or `crowd-lite` for small or packed people, `accurate` for ordinary traffic. Say plainly
 that a COCO detector undercounts dense crowds and that a crowd-trained YOLO11n is the next step.
