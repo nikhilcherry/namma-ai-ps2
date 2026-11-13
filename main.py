@@ -58,6 +58,8 @@ ap.add_argument("--min-h", type=float, default=0.0, help="drop boxes shorter tha
 ap.add_argument("--every", type=int, default=1, help="video: use every Nth frame")
 ap.add_argument("--threads", type=int, default=0,
                 help="ExecuTorch CPU threads (0 = runtime default = all cores; Arm's reference used 1). Untested on device")
+ap.add_argument("--group-score", action="store_true",
+                help="vehicle score = sum over its group (car+bus+truck, bicycle+motorcycle) before the threshold; re-tune --conf-vehicle with tools/sweep.py first")
 ap.add_argument("--repeat", type=int, default=1,
                 help="image folder: run inference N times over the folder for timing only (rows and counts are written once)")
 ap.add_argument("--zones", default=None, help="JSON with a normalised 'road' polygon, optional 'count' polygon")
@@ -86,6 +88,7 @@ if a.threads:
     print("threads:", THREADS_NOTE)
 det = runner.load(a.model, a.backend)
 det2 = runner.load(a.also, a.backend) if a.also else None
+det.group_score = bool(a.group_score)
 is_video = not src.is_dir()
 if a.smooth and not is_video:
     a.smooth = False                       # never smooth a folder of unrelated images
@@ -347,6 +350,6 @@ except OSError:
     "e2e_ms": round(me, 1), "fps_e2e": round(1000 / me, 2), "stage_share_pct": shares,
     "peak_ram_mb": round(peak_mb),
     "people_total": sum(r["person"] for r in rows), "vehicle_total": sum(r["vehicle"] for r in rows),
-    "repeat": a.repeat, "threads": a.threads, "threads_note": THREADS_NOTE, "samples": len(times), "pi_start": PI0, "pi_end": PI1,
+    "repeat": a.repeat, "group_score": bool(a.group_score), "threads": a.threads, "threads_note": THREADS_NOTE, "samples": len(times), "pi_start": PI0, "pi_end": PI1,
     "throttled_during_run": bool(PI1 and (PI1["throttled"] != "0x0" or (PI0 and PI0["throttled"] != PI1["throttled"]))),
     "zones": bool(a.zones and Path(a.zones).exists()), "source": str(a.source), "every": a.every, "python": platform.python_version()}, indent=1))

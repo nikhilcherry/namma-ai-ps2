@@ -56,6 +56,26 @@ def set_threads(n):
     return "no Python threadpool binding found in this executorch build; use taskset (tools/thread_sweep.sh)"
 
 
+def decode_scores(cls, floor=0.05, group_score=False):
+    """cls: [N, len(IDS)] class scores per anchor (columns follow IDS). Returns (anchor index, score, class id).
+    Default: the best class per anchor. group_score=True: an anchor whose best class is a vehicle gets the
+    SUM of the scores of its group (car+bus+truck, or bicycle+motorcycle), clipped to 1, and keeps the label of
+    the best class in the group. This keeps an auto-rickshaw that scores car 0.20 / truck 0.18. The sum is not a
+    calibrated probability, so the threshold must be re-chosen on human counts (tools/sweep.py). Default off."""
+    best = cls.argmax(1)
+    score = cls[np.arange(len(cls)), best].copy()
+    if group_score:
+        col = {cid: i for i, cid in enumerate(IDS)}
+        for members in ((2, 5, 7), (1, 3)):
+            idx = [col[m] for m in members]
+            in_grp = np.isin(best, idx)
+            if in_grp.any():
+                score[in_grp] = np.minimum(1.0, cls[in_grp][:, idx].sum(1))
+                best[in_grp] = np.array(idx)[cls[in_grp][:, idx].argmax(1)]
+    keep = np.nonzero(score > floor)[0]
+    return keep, score[keep], np.array([IDS[i] for i in best[keep]], dtype=np.int64)
+
+
 class ExecutorchDetector:
     """YOLO11 .pte (INT8 or FP32): input [1,3,S,S] in 0..1, output [1,84,N]. S is read from the file."""
 
@@ -63,6 +83,7 @@ class ExecutorchDetector:
         import torch
         from executorch.runtime import Runtime
         self.torch, self.iou = torch, iou
+        self.group_score = False        # set from main.py --group-score
         self.method = Runtime.get().load_program(str(pte)).load_method("forward")
         try:                                   # input H and W, read from the .pte itself (rectangular ok)
             sz = self.method.metadata.input_tensor_meta(0).sizes()
@@ -90,15 +111,12 @@ class ExecutorchDetector:
         ms = (time.perf_counter() - t0) * 1000
         pred = out.numpy()[0].T                      # [N, 84]
         cls = pred[:, [4 + i for i in IDS]]
-        best = cls.argmax(1)
-        score = cls[np.arange(len(cls)), best]
-        keep = score > floor
-        b, score, best = pred[keep, :4], score[keep], best[keep]
+        keep, score, cid = decode_scores(cls, floor, self.group_score)
+        b = pred[keep, :4]
         xyxy = np.stack([b[:, 0] - b[:, 2] / 2, b[:, 1] - b[:, 3] / 2,
                          b[:, 0] + b[:, 2] / 2, b[:, 1] + b[:, 3] / 2], 1)
         xyxy[:, [0, 2]] = ((xyxy[:, [0, 2]] - px) / s).clip(0, w0)
         xyxy[:, [1, 3]] = ((xyxy[:, [1, 3]] - py) / s).clip(0, h0)
-        cid = np.array([IDS[i] for i in best], dtype=np.int64)
         return (xyxy.astype(np.float32), score.astype(np.float32), cid), ms
 
     def detect(self, img_bgr, conf=0.30, only_person=False, conf_vehicle=None, iou=None,
