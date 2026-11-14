@@ -2,7 +2,8 @@
 
 Counts people and vehicles in a clip or a folder of images, fully offline, on a Raspberry Pi with
 an ExecuTorch YOLO11n `.pte`. It then turns the counts into one page a ward engineer can act on.
-Counts only: no tracking, no identities, no cloud.
+Counts only: no identities, no cloud. Optional `--track` links boxes across frames by overlap only (no faces,
+no appearance features) for unique counts and in/out counts across a line.
 
 ## Run it on the Pi
 
@@ -26,6 +27,8 @@ Other tools:
 
 ```bash
 python tools/zones.py --source clip.mp4            # click the road corners in a browser -> zones.json
+python tools/zones.py --source clip.mp4 --line     # click the two ends of an in/out counting line (same zones.json)
+python main.py --source clip.mp4 --profile track --zones zones.json          # unique + in/out counts; keep --every 1-3
 python tools/handcount.py sheet --source clip.mp4 --run out/<model>    # 10 clean frames for a human to count
 python tools/handcount.py table --run out/<model>                      # model vs human table
 python tools/live.py                               # phone takes a photo, the Pi counts it (LAN only)
@@ -69,7 +72,9 @@ Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK b
 - **Integrity:** every CSV row is hash-chained with the model and input hashes (`stamp.json`). Without a key this detects accidental or partial edits only, because whoever edits the CSV can rebuild the chain. With a key (`python stamp.py keygen`, or `STAMP_KEY`), `stamp.json` carries an HMAC and `verify` fails on a rebuilt or unsigned stamp. The commit that publishes `stamp.json` head is the anchor.
 
 ## Limits
-- Counts are per frame, not unique people or vehicles.
+- Counts are per frame, not unique people or vehicles. `--track` gives unique and line counts, but it matches boxes
+  by overlap only: crowds, occlusion and gaps between frames (`--every` above 3, or slow tiled profiles) split
+  tracks and over-count. Treat tracked totals as upper estimates.
 - COCO has no auto-rickshaw class: autos appear as car or truck, so the merged `vehicle` count is the one to trust.
 - The traffic level is box area over a road zone: a relative index, not true density.
 - The zone and the level cut-offs are set by hand and need calibrating per site.
@@ -89,6 +94,7 @@ Models are AGPL-3.0 (Ultralytics / Arm). Sample photos: Wikimedia Commons, credi
 | `accurate` | yolo11n FP32 640, full frame + 4 tiles, all classes, smoothing | ~450 |
 | `crowd` | yolo11n FP32 640, full frame + 16 tiles (`--tile-grid 4`), smoothing: for dense or far-away people | ~17 passes, about 3.5x `accurate` |
 | `crowd-lite` | as `crowd`, but only the tiles the full frame hints at (`--tile guided`): about half the passes, a few people fewer in dense crowds | ~5–9 passes |
+| `track` | Arm INT8 640, one pass, `--track`: unique counts and in/out across the `line` in `zones.json`. Keep `--every` at 1–3 | ~90 |
 
 Only the **n** model is organiser-confirmed: `ensemble` (uses yolo11s) is for comparison until they approve s/m. The submitted-counts profile is `accurate` (or `lite`).
 

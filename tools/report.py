@@ -116,6 +116,17 @@ if hp.exists():
     bullets = [l[2:].replace("**", "") for l in hp.read_text(encoding="utf-8").splitlines() if l.startswith("- ")][:4]
     acc_html = "<h2>Checked against a human count</h2><ul>" + "".join(f"<li>{b}</li>" for b in bullets) + "</ul>"
 mixrow = " · ".join(f"{k} {v} ({v/tot:.0%})" for k, v in mix.items() if v)
+T = S.get("track")
+track_html = ""
+if T:
+    track_html = (f"<h2>Unique counts (tracked)</h2><p>About <b>{T['people_unique']}</b> different people and "
+                  f"<b>{T['vehicles_unique']}</b> different vehicles over the clip"
+                  + (f"; across the counting line: people {T['people_in']} in / {T['people_out']} out, "
+                     f"vehicles {T['vehicles_in']} in / {T['vehicles_out']} out" if S.get("track_line") else "")
+                  + ".</p><p class=\"n\">Boxes are linked frame to frame by overlap only: no faces or identities. "
+                  "Crowds and gaps between frames split tracks, so these are upper estimates.</p>")
+limit_unique = ("Tracked totals link boxes by overlap only and over-count in crowds; per-frame counts count the same person in every frame."
+                if T else "Counts per frame, not unique people: the same person is counted in every frame they appear in.")
 html = f"""<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>
 @page {{ size: A4; margin: 10mm 12mm; }} body {{ font: 9.5pt/1.35 system-ui, "Noto Sans", sans-serif; color: #1c1b19; max-width: 186mm; margin: auto; }}
 h1 {{ font-size: 18pt; margin: 0; }} h2 {{ font-size: 11pt; margin: 7pt 0 2pt; }} .sub {{ color: #666; margin: 2pt 0 8pt; }}
@@ -131,12 +142,13 @@ figcaption, .n {{ color: #666; font-size: 8.5pt; }} ul {{ margin: 2pt 0; padding
 <h2>Counts across the clip</h2>{chart()}
 <p class="n">Vehicle mix (box labels, summed over frames): {mixrow or 'none'}. Auto-rickshaws have no class in this model and appear as car or truck, so the merged vehicle count is the reliable one.</p>
 <div class="f">{''.join(f'<figure><img src="data:image/jpeg;base64,{b}"><figcaption>{c}</figcaption></figure>' for b, c in figs)}</div>
+{track_html}
 {acc_html}
 <h2>How it was measured</h2>
 <p>{S['model']} ({S['size_mb']} MB, input {S['input']}) on ExecuTorch/XNNPACK: {S['mean_ms']} ms mean inference (p95 {S['p95_ms']} ms),
 {S['fps_infer']} FPS inference only, {S['fps_e2e']} FPS end to end, peak RAM {S['peak_ram_mb']} MB. No network used. Only counts leave the device; no faces or frames are stored in deploy mode.</p>
 <h2>Limits</h2>
-<ul><li>Counts per frame, not unique people: the same person is counted in every frame they appear in.</li>
+<ul><li>{limit_unique}</li>
 <li>The road zone and the BUSY/JAMMED cut-offs are set by hand for each site.</li>
 <li>Small or half-hidden people are missed; the error against a human count is stated above when measured. Head blur in saved frames covers only detected people, so a missed person is not blurred.</li></ul>
 <h2>What this is for</h2><p>{use}</p>

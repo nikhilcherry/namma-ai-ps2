@@ -21,13 +21,14 @@ for _st in (sys.stdout, sys.stderr):        # Windows consoles default to cp1252
         _st.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
-import insights, runner, stamp
+import insights, runner, stamp, track
 
 KEEP = ["person", "car", "bus", "truck", "motorcycle", "bicycle"]
 IMG = {".jpg", ".jpeg", ".png", ".bmp"}
+TRACK_COLS = ["people_unique", "vehicles_unique", "people_in", "people_out", "vehicles_in", "vehicles_out"]
 COLUMNS = ["frame", "t_s", "person", "car", "bus", "truck", "motorcycle", "bicycle", "vehicle",
            "person_smooth", "vehicle_smooth", "person_tiled", "occupancy", "traffic_level",
-           "crowd_level", "ped_on_road", "riders", "reused", "infer_ms"]
+           "crowd_level", "ped_on_road", "riders", "reused", "infer_ms", *TRACK_COLS]
 
 # Starting guesses, replaced by measurements (tools/sweep.py, benchmark table).
 PROFILES = {
@@ -45,6 +46,8 @@ PROFILES = {
                   deploy=False, no_addons=False, smooth=True),   # 17 passes per frame: for dense or far-away people
     "crowd-lite": dict(model="bundle/models/yolo11n_raspberry_executorch_original.pte", tile="guided", tile_grid=4,
                        deploy=False, no_addons=False, smooth=True),   # crowd, but only tiles the full frame hints at: about half the passes, a few people fewer
+    "track": dict(model="bundle/models/yolo11n_raspberry_executorch_optimized.pte", tile="off", deploy=False,
+                  no_addons=False, track=True),   # unique + line in/out counts: one fast pass per frame so boxes stay close between frames
 }
 
 ap = argparse.ArgumentParser()
@@ -81,6 +84,9 @@ ap.add_argument("--tile-grid", type=int, default=2, choices=[2, 3, 4],
 ap.add_argument("--tile", choices=["off", "auto", "all", "adaptive", "guided"], default="off",
                 help="auto: people-only 2x2 when people look small; all: full frame + 4 tiles, all classes; adaptive: tiles only when the full frame looks crowded/small")
 ap.add_argument("--smooth", action="store_true", help="video: rolling median over 5 processed frames")
+ap.add_argument("--track", action="store_true",
+                help="video: link boxes across frames by overlap (no identities) for unique counts, and count "
+                     "crossings of the optional 'line' in zones.json. Needs close frames: --every 1-3")
 ap.add_argument("--skip-static", type=float, nargs="?", const=0.5, default=0.0, metavar="MAD",
                 help="fixed camera: reuse the last counts if mean abs diff of a 160x90 grey copy is below MAD "
                      "(default 0.5, measured: 2.0 and 1.0 changed a count by 2); a real inference is forced at least every 10th processed frame")
@@ -107,6 +113,12 @@ det.group_score = bool(a.group_score)
 is_video = not src.is_dir()
 if a.smooth and not is_video:
     a.smooth = False                       # never smooth a folder of unrelated images
+if a.track and not is_video:
+    print("WARNING: --track needs a video; ignored for an image folder.")
+    a.track = False
+if a.track and a.every > 3:
+    print(f"WARNING: --track with --every {a.every}: boxes move too far between frames, unique counts will be too high.")
+TR = None                                  # built on the first frame, when the frame size is known
 TILE_STATS = []
 T = {"decode": 0.0, "pre": 0.0, "infer": 0.0, "post": 0.0, "addons": 0.0, "save": 0.0}
 
@@ -260,7 +272,13 @@ for name, t, img in files:
     veh = sum(cnt[k] for k in KEEP if k != "person")
     row = {"frame": name, "t_s": round(t, 2), **cnt, "vehicle": veh, "person_smooth": "", "vehicle_smooth": "",
            "person_tiled": "", "occupancy": "", "traffic_level": "", "crowd_level": "", "ped_on_road": "",
-           "riders": "", "reused": reused, "infer_ms": round(ms, 1)}
+           "riders": "", "reused": reused, "infer_ms": round(ms, 1), **dict.fromkeys(TRACK_COLS, "")}
+    tids = [None] * len(dets)
+    if a.track:
+        if TR is None:
+            TR = track.Tracker(insights.load_line(a.zones, img.shape[1], img.shape[0]))
+        tids = TR.update(dets)
+        row.update(TR.totals())
     if not a.no_addons:
         h, w = img.shape[:2]
         zone, zmask = ZC.road(w, h)
@@ -286,11 +304,18 @@ for name, t, img in files:
         vis = img.copy()
         if a.blur:
             insights.blur_heads(vis, dets)
-        for n, s, (x1, y1, x2, y2) in dets:
+        for (n, s, (x1, y1, x2, y2)), tid in zip(dets, tids):
             cv2.rectangle(vis, (int(x1), int(y1)), (int(x2), int(y2)), (0, 220, 0), 2)
-            cv2.putText(vis, f"{n} {s:.2f}", (int(x1), int(y1) - 4), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5, (0, 220, 0), 1)
+            cv2.putText(vis, f"{'#%d ' % tid if tid else ''}{n} {s:.2f}", (int(x1), int(y1) - 4),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 220, 0), 1)
         lines = [f"people {cnt['person']}  vehicles {veh}"]
+        if a.track:
+            lines.append(f"unique people {row['people_unique']}  vehicles {row['vehicles_unique']}")
+            if TR.line is not None:
+                p1, p2 = (tuple(int(v) for v in p) for p in TR.line)
+                cv2.line(vis, p1, p2, (255, 0, 255), 3)
+                lines.append(f"line in/out: people {row['people_in']}/{row['people_out']}  "
+                             f"vehicles {row['vehicles_in']}/{row['vehicles_out']}")
         if not a.no_addons:
             lines.append(f"traffic {row['traffic_level']} ({row['occupancy']})  crowd {row['crowd_level']}")
             lines.append(f"on road {row['ped_on_road']}  riders {row['riders']}")
@@ -342,6 +367,8 @@ tot = sum(T.values()) or 1.0
 shares = {k: round(100 * v / tot, 1) for k, v in T.items()}
 print("time shares %: " + "  ".join(f"{k} {v}" for k, v in shares.items()))
 print(f"peak people: {peak_ppl['person']} at {peak_ppl['frame']}")
+if TR is not None:
+    print("tracked (unique, no identities): " + "  ".join(f"{k}={v}" for k, v in TR.totals().items()))
 print(f"stamp: model {st['model_sha256'][:12]}…  input {st['source_sha256'][:12]}…  head {st['head'][:16]}…")
 (out / "summary.txt").write_text(
     f"frames={len(rows)} model={pte[0].name} size_mb={size_mb:.2f}\n"
@@ -369,4 +396,5 @@ except OSError:
     "people_total": sum(r["person"] for r in rows), "vehicle_total": sum(r["vehicle"] for r in rows),
     "repeat": a.repeat, "group_score": bool(a.group_score), "threads": a.threads, "threads_note": THREADS_NOTE, "samples": len(times), "pi_start": PI0, "pi_end": PI1,
     "throttled_during_run": bool(PI1 and (PI1["throttled"] != "0x0" or (PI0 and PI0["throttled"] != PI1["throttled"]))),
-    "zones": bool(a.zones and Path(a.zones).exists()), "source": str(a.source), "every": a.every, "python": platform.python_version()}, indent=1))
+    "zones": bool(a.zones and Path(a.zones).exists() and json.loads(Path(a.zones).read_text()).get("road")), "source": str(a.source), "every": a.every, "python": platform.python_version(),
+    "track": TR.totals() if TR else None, "track_line": TR is not None and TR.line is not None}, indent=1))

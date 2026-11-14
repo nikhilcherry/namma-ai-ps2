@@ -15,10 +15,8 @@ BIKES = {"motorcycle", "bicycle"}
 
 def load_zone(path, w, h):
     """Road polygon in pixels. JSON holds normalised [[x,y],...]; default = bottom 60%."""
-    if path and Path(path).exists():
-        pts = json.loads(Path(path).read_text())["road"]
-    else:
-        pts = [[0, 0.4], [1, 0.4], [1, 1], [0, 1]]
+    pts = json.loads(Path(path).read_text()).get("road") if path and Path(path).exists() else None
+    pts = pts or [[0, 0.4], [1, 0.4], [1, 1], [0, 1]]
     return np.array([[int(x * w), int(y * h)] for x, y in pts], np.int32)
 
 
@@ -120,6 +118,15 @@ def load_count_region(path, w, h):
         pts = json.loads(Path(path).read_text()).get("count")
         if pts:
             return np.array([[int(x * w), int(y * h)] for x, y in pts], np.int32)
+    return None
+
+
+def load_line(path, w, h):
+    """Optional 'line' [[x,y],[x,y]] in zones.json (normalised) for in/out counting. None = no line."""
+    if path and Path(path).exists():
+        pts = json.loads(Path(path).read_text()).get("line")
+        if pts:
+            return [(x * w, y * h) for x, y in pts[:2]]
     return None
 
 
