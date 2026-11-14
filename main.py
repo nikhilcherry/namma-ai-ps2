@@ -99,6 +99,10 @@ if a.threads:
     print("threads:", THREADS_NOTE)
 det = runner.load(a.model, a.backend)
 det2 = runner.load(a.also, a.backend) if a.also else None
+# Only yolo11n is organiser-confirmed. Anything else is fine for experiments, but must never feed submitted counts unnoticed.
+APPROVED = all("yolo11n" in Path(m).name for m in (a.model, a.also) if m)
+if not APPROVED:
+    print("WARNING: model(s) not organiser-confirmed (only yolo11n is): this run is for comparison, not for submitted counts.")
 det.group_score = bool(a.group_score)
 is_video = not src.is_dir()
 if a.smooth and not is_video:
@@ -356,7 +360,7 @@ except OSError:
     board = platform.machine() + " (not a Pi)"
 (out / "summary.json").write_text(json.dumps({
     "board": board, "threadpool_threads": THREADS, "cpu_count": os.cpu_count(), "model": pte[0].name, "input": getattr(det, "size", 640), "size_mb": round(size_mb, 2),
-    "profile": a.profile or "custom", "tile": a.tile, "tile_grid": a.tile_grid, "also": a.also, "conf_person": CP, "conf_vehicle": CV, "iou": a.iou,
+    "yolo11n_only": APPROVED, "profile": a.profile or "custom", "tile": a.tile, "tile_grid": a.tile_grid, "also": a.also, "conf_person": CP, "conf_vehicle": CV, "iou": a.iou,
     "grouped_nms": GROUPED, "min_h": a.min_h, "smooth": a.smooth,
     "frames": len(rows), "frames_inferred": n_real, "mean_ms": round(m, 1), "median_ms": round(med, 1),
     "p95_ms": round(p95, 1), "std_ms": round(statistics.pstdev(real), 1), "fps_infer": round(1000 / m, 2),

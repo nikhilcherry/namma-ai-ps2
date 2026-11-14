@@ -125,7 +125,7 @@ h1 {{ font-size: 18pt; margin: 0; }} h2 {{ font-size: 11pt; margin: 7pt 0 2pt; }
 figcaption, .n {{ color: #666; font-size: 8.5pt; }} ul {{ margin: 2pt 0; padding-left: 14pt; }} p {{ margin: 2pt 0; }}
 </style></head><body>
 <h1>{title}</h1>
-<div class="sub">{a.site + " · " if a.site else ""}{n} frames{f" over {span:.0f} s" if is_video else ""} · counted offline on {S['board']} · source: {Path(S['source']).name}</div>
+<div class="sub">{a.site + " · " if a.site else ""}{n} frames{f" over {span:.0f} s" if is_video else ""} · counted offline on {S['board']} · source: {Path(S['source']).name}{' · <b>COMPARISON RUN: model not organiser-confirmed, not for submission</b>' if not S.get('yolo11n_only', True) else ''}</div>
 <div class="v"><b>{verdict}</b><p>{why}</p><p class="n">{rule} This is one short clip; a real decision needs a week of counts from the same spot.</p></div>
 <div class="k">{''.join(f'<div><b>{v}</b>{k}<br><span>{s}</span></div>' for k, v, s in kpis)}</div>
 <h2>Counts across the clip</h2>{chart()}
