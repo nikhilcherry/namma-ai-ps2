@@ -4,6 +4,8 @@
   -> open http://<pi-ip>:18081, click the corners of the road in order, press Save.
   python tools/zones.py --source clip.mp4 --line    same, but click the two ends of the in/out counting line
                                                     (added to the same zones.json; used by main.py --track)
+  python tools/zones.py --source clip.mp4 --cross   click two points ALONG the middle of the road: walkers who cross
+                                                    it crossed the road (tools/warrant.py, the IRC:103 crossing check)
 
 Or skip the browser:  python tools/zones.py --source clip.mp4 --grid   writes zone_grid.jpg with a
 10% grid to read the corners from, then write zones.json by hand: {"road": [[x,y],...]} in 0..1.
@@ -21,8 +23,9 @@ ap.add_argument("--out", default="zones.json")
 ap.add_argument("--port", type=int, default=18081)
 ap.add_argument("--grid", action="store_true")
 ap.add_argument("--line", action="store_true", help="click the two ends of the in/out counting line instead of the road")
+ap.add_argument("--cross", action="store_true", help="click two points along the middle of the road (walkers crossing it)")
 a = ap.parse_args()
-KEY, MIN_PTS = ("line", 2) if a.line else ("road", 3)
+KEY, MIN_PTS = ("line", 2) if a.line else ("cross_line", 2) if a.cross else ("road", 3)
 src = Path(a.source)
 if src.is_dir():
     img = cv2.imread(str(sorted(p for p in src.iterdir() if p.suffix.lower() in IMG)[0]))
@@ -52,7 +55,8 @@ const save=async()=>{if(pts.length<__MIN__){s.textContent='need at least __MIN__
  const r=await fetch('/save',{method:'POST',body:JSON.stringify({pts:pts})});s.textContent=await r.text()};</script>"""
 PAGE = PAGE.replace(b"__MIN__", str(MIN_PTS).encode()).replace(b"__HINT__", (
     b"Click the two ends of the counting line. Crossing it downwards (line drawn left to right) counts as in."
-    if a.line else b"Click the corners of the road, in order."))
+    if a.line else b"Click two points along the middle of the road, past both ends of where people cross."
+    if a.cross else b"Click the corners of the road, in order."))
 
 
 class H(BaseHTTPRequestHandler):
@@ -66,7 +70,7 @@ class H(BaseHTTPRequestHandler):
 
     def do_POST(self):
         z = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-        pts = [[float(x), float(y)] for x, y in z["pts"]][:2 if a.line else None]
+        pts = [[float(x), float(y)] for x, y in z["pts"]][:2 if MIN_PTS == 2 else None]
         out = Path(a.out)
         data = json.loads(out.read_text()) if out.exists() else {}      # keep the other keys (road / count / line)
         data[KEY] = pts

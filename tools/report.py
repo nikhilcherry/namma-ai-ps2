@@ -98,7 +98,7 @@ if is_video and len(sizes) == 1 and pf.exists():       # one fixed view: where p
     (W, H), = sizes
     acc = np.zeros((H, W), np.float32)
     for d in D.values():
-        for nm, _, x1, y1, x2, y2 in d["boxes"]:
+        for nm, _, x1, y1, x2, y2, *_ in d["boxes"]:     # track runs add a track id
             if nm == "person":
                 cv2.circle(acc, (int((x1 + x2) / 2), min(H - 1, int(y2))), max(6, W // 80), 1.0, -1)
     if acc.max() > 0:
@@ -125,6 +125,13 @@ if T:
                      f"vehicles {T['vehicles_in']} in / {T['vehicles_out']} out" if S.get("track_line") else "")
                   + ".</p><p class=\"n\">Boxes are linked frame to frame by overlap only: no faces or identities. "
                   "Crowds and gaps between frames split tracks, so these are upper estimates.</p>")
+wp = run / "warrant.json"         # tools/warrant.py: the IRC:103 crossing check, when it was run on this folder
+if wp.exists():
+    W = json.loads(wp.read_text(encoding="utf-8")); wi = W["criteria"]["i_pv2"]; ww = W["criteria"]["iii_wait"]
+    track_html += (f"<h2>Crossing check (IRC:103-2012)</h2><p><b>{W['verdict']}</b>. Walkers crossing {wi['P_per_h']}/h, "
+                   f"vehicles {wi['V_per_h']}/h: P&times;V&sup2; = {wi['PV2']:.1e}, {wi['times_limit']}&times; the {wi['limit']:.0e} limit "
+                   f"({wi['basis']})" + (f"; mean wait {ww['mean_s']} s (level of service {ww['level_of_service']})" if ww["mean_s"] is not None else "")
+                   + ".</p><p class=\"n\">Speed (over 65 km/h) is not measured; injuries come from police records. Full table: warrant.md.</p>")
 limit_unique = ("Tracked totals link boxes by overlap only and over-count in crowds; per-frame counts count the same person in every frame."
                 if T else "Counts per frame, not unique people: the same person is counted in every frame they appear in.")
 html = f"""<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>

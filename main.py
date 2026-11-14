@@ -296,7 +296,8 @@ for name, t, img in files:
     rows.append(row)
     e2e.append((time.perf_counter() - t0) * 1000)   # pre-process + inference + post-process + add-ons
     alldets[name] = {"w": img.shape[1], "h": img.shape[0],
-                     "boxes": [[n, round(s, 3)] + [round(v, 1) for v in b] for n, s, b in dets]}
+                     "boxes": [[n, round(s, 3)] + [round(v, 1) for v in b] + ([tid] if a.track else [])   # tid: tools/warrant.py
+                               for (n, s, b), tid in zip(dets, tids)]}
     print(f"{name:<14} person={cnt['person']:<3} vehicle={veh:<3} "
           f"{row['traffic_level'] or '-':<7} {row['crowd_level'] or '-':<5} {ms:6.1f} ms{' (reused)' if reused else ''}")
     if not a.deploy:

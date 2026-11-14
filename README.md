@@ -41,6 +41,24 @@ python main.py --source folder/ --repeat 10        # image folder: 10 timing pas
 python main.py --source clip.mp4 --deploy          # CSV only: no frames are written at all
 ```
 
+## Crossing check: does this spot need a signal? (IRC:103-2012)
+
+India's pedestrian-facilities code (IRC:103-2012, clause 6.7.4.1.2) says a mid-block crossing needs control (a signal
+with a pedestrian phase) when peak-hour walkers crossing (P) times vehicles squared (V²) is over 10⁸ (2×10⁸ on a divided
+road), when speeds pass 65 km/h, when pedestrians wait too long, or after 5 pedestrian injuries in a year.
+`tools/warrant.py` checks the rules a camera can see: P×V², and waiting time graded A–F by the code's Annex I Table 1.2.
+
+```bash
+python tools/zones.py --source clip.mp4            # road
+python tools/zones.py --source clip.mp4 --cross    # line ALONG the middle of the road (walkers crossing it)
+python tools/zones.py --source clip.mp4 --line     # line ACROSS the road (vehicles passing it)
+python main.py --source clip.mp4 --profile track --every 2 --zones zones.json --out out/track
+python tools/warrant.py out/track --zones zones.json --lanes 2 --width-m 7.5 [--divided] [--area school] [--injuries N]
+```
+Writes `warrant.md` / `warrant.json`; `tools/report.py` adds it to the site report. Under an hour of video the result is
+marked provisional (scaled to an hour); speed is not measured; zebra siting (150 m spacing, 300 m between junctions) is
+listed for the engineer to check on site.
+
 ## Raspberry Pi measurements
 <!-- PI_TABLE_START -->
 _Filled by `run_all.sh` on the Pi._
