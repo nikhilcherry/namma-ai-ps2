@@ -2,7 +2,7 @@
 
 **Project title:** Edge people & vehicle counter: from counts to a decision
 
-**Team:** [names] · NMIT Bengaluru
+**Team:** Nikhil, Shreyas, Shaun · NMIT Bengaluru
 
 **GitHub:** https://github.com/nikhilcherry/namma-ai-ps2
 

@@ -40,7 +40,7 @@ Status: DONE = built and tested on the laptop, TODO = not built, PI = needs a te
 | **P9 Story + outputs** | One-page site report (gate or junction story) with heatmap, two pitch scripts, live photo page | `tools/report.py`, `tools/live.py`, `docs/pitch.md` | DONE · **approach PDF fixes still TODO** |
 | **P10 Submission** | README (tables auto-filled by `run_all.sh`), form answers drafted, GitHub | `README.md`, `docs/submission.md` | DONE (drafts) · numbers filled on the day |
 
-## Team (max 3 on the floor; confirm the names on the registration)
+## Team (max 3 on the floor): Nikhil, Shreyas, Shaun
 | Person | Owns |
 |---|---|
 | **A: Pi + measurements** | P0 install on the Pi, P2 on-device run, P6 numbers, INT8 vs FP32 on the actual board |
