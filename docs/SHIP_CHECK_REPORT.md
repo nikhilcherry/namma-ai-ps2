@@ -11,7 +11,7 @@ Legend: PASS = command run, result matches. FAIL = command run, result does not 
 ## Blockers (fix these before anyone says "submitted")
 
 1. **The run was throttled.** `deliverables/summary.json` has `"throttled_during_run": true`. The checklist says to cool the board and run again. The Pi's CPU governor is `ondemand`, not `performance`, which also fits the slightly slow timings in section 4. Run `bash tools/pi_check.sh --perf` and re-run.
-2. **The source is not a clip.** `summary.json` says `"source": "img/raw"`, a folder of 15 stills (14 frames processed), and the PDF says "source: raw". Nothing shows these are the organisers' file. If the organisers gave a clip, the submitted numbers must come from it.
+2. **The source is not the organisers' media.** `summary.json` says `"source": "img/raw"`, 14 stills plus a `meta.json`. That file credits every image to Wikimedia Commons (for example "Vehicles stuck in traffic at Egipura signal, Bangalore.jpg", CC BY-SA 3.0), so these are stand-in photos, not the organisers' clip or images. No clip or video exists anywhere on this Pi. The submitted numbers must be re-run on the organisers' media, and any use of the stand-in photos needs their CC attribution.
 3. **Nothing is committed.** `deliverables/` is untracked (`git ls-files deliverables` is empty), so the repo that others can see has no deliverables and no benchmark numbers.
 4. **The docs are still templates.** `docs/pitch.md` has 15 lines with `[N]`, `[10]` or `[Pi model]` blanks. `docs/submission.md` has 9. Team names are missing from both `docs/submission.md` and `PLAN.md`.
 
@@ -22,7 +22,7 @@ Also worth settling: `docs/submission.md` says the submitted counts come from th
 | Check | Result | Evidence |
 |---|---|---|
 | Board is a Pi | PASS | `Raspberry Pi 5 Model B Rev 1.1`, Debian 13, kernel 6.18.50+rpt-rpi-2712 |
-| Source is the organisers' clip | FAIL | `"source": "img/raw"` (folder of stills) |
+| Source is the organisers' clip | FAIL | `"source": "img/raw"`: 14 Wikimedia Commons stand-in photos (see `img/raw/meta.json`). No organisers' media is on this Pi. |
 | Only YOLO11n for submitted counts | PASS | model `yolo11n_raspberry_executorch_optimized.pte`, `"yolo11n_only": true` |
 | Pi was not throttled | FAIL | `"throttled_during_run": true`. Right now `vcgencmd get_throttled` is `0x0` at 64.8 C, governor `ondemand` |
 
