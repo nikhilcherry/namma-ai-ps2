@@ -41,3 +41,10 @@ def test_bike_group_sums_bicycle_and_motorcycle():
     cls = np.stack([row(motorcycle=0.2, bicycle=0.15)])
     keep, score, cid = runner.decode_scores(cls, floor=0.3, group_score=True)
     assert len(keep) == 1 and cid[0] == 3
+
+
+if __name__ == "__main__":
+    for _n, _f in sorted(globals().items()):
+        if _n.startswith("test_") and callable(_f):
+            _f()
+            print("ok", _n)

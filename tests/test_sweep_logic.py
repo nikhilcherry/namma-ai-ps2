@@ -33,3 +33,10 @@ def test_best_ranks_settings_by_tune_error():
     res = {(False, 0.7, 0.0): (bad, bad), (True, 0.5, 0.0): (good, good)}
     out = sweep.best(res, truth, ["a"], ["b"])
     assert out[0]["grouped"] is True and out[0]["tune"] == 0 and out[1]["tune"] > 0
+
+
+if __name__ == "__main__":
+    for _n, _f in sorted(globals().items()):
+        if _n.startswith("test_") and callable(_f):
+            _f()
+            print("ok", _n)

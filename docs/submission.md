@@ -39,7 +39,7 @@ the road, how often, and for how long, without sending any video anywhere.
 **One application:** [gate: deciding whether a school gate needs a marshal and at what time] /
 [junction: flagging approaches whose green time no longer matches the traffic].
 
-**Privacy:** heads are blurred in saved frames; deploy mode writes numbers only. No tracking, no identities.
+**Privacy:** heads are blurred in saved frames; deploy mode writes numbers only. No identities. Optional tracking links boxes by overlap only.
 
 **Limits we state:** counts are per frame, not unique; auto-rickshaws are read as car or truck;
 small or hidden people are missed; zone and thresholds are set by hand per site.
