@@ -100,5 +100,5 @@ else:
             f"- Frames where both counts are within ±2 of the human: **{within} of {n}**",
             f"- Model run: `{a.run}`. This is {n} frames from one clip, not a benchmark."]
     text = "\n".join(out) + "\n"
-    (hd / "accuracy.md").write_text(text)
+    (hd / "accuracy.md").write_text(text, encoding="utf-8")
     print(text)

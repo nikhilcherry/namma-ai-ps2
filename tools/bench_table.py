@@ -44,13 +44,13 @@ for d in runs:
 lines += ["", f"Δ = mean absolute count difference per frame against `{a.ref}` (FP32, 640).",
           "End to end = pre-processing + inference + post-processing + add-ons, without saving images."]
 text = "\n".join(lines) + "\n"
-(root / "benchmark.md").write_text(text)
+(root / "benchmark.md").write_text(text, encoding="utf-8")
 print(text)
 if a.fill_readme:
-    rd = Path("README.md"); s = rd.read_text()
+    rd = Path("README.md"); s = rd.read_text(encoding="utf-8")
     new = re.sub(r"(<!-- PI_TABLE_START -->).*?(<!-- PI_TABLE_END -->)", lambda m: m.group(1) + "\n" + text + m.group(2),
                  s, flags=re.S)
     if new != s:
-        rd.write_text(new); print("README.md table filled")
+        rd.write_text(new, encoding="utf-8"); print("README.md table filled")
     else:
         print("README.md: markers not found, table not filled")

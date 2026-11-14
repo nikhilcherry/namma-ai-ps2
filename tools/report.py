@@ -113,7 +113,7 @@ if is_video and len(sizes) == 1 and pf.exists():       # one fixed view: where p
 acc_html = ""
 hp = Path(a.handcount)
 if hp.exists():
-    bullets = [l[2:].replace("**", "") for l in hp.read_text().splitlines() if l.startswith("- ")][:4]
+    bullets = [l[2:].replace("**", "") for l in hp.read_text(encoding="utf-8").splitlines() if l.startswith("- ")][:4]
     acc_html = "<h2>Checked against a human count</h2><ul>" + "".join(f"<li>{b}</li>" for b in bullets) + "</ul>"
 mixrow = " · ".join(f"{k} {v} ({v/tot:.0%})" for k, v in mix.items() if v)
 html = f"""<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>
@@ -142,7 +142,7 @@ figcaption, .n {{ color: #666; font-size: 8.5pt; }} ul {{ margin: 2pt 0; padding
 <h2>What this is for</h2><p>{use}</p>
 <p class="n">Code and raw outputs: {a.repo} · results are hash-chained (stamp.json), head {json.loads((run / 'stamp.json').read_text())['head'][:16]}…</p>
 </body></html>"""
-(run / "report.html").write_text(html)
+(run / "report.html").write_text(html, encoding="utf-8")
 print(f"wrote {run / 'report.html'}  verdict: {verdict}")
 try:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
