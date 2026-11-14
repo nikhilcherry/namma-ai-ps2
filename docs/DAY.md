@@ -13,6 +13,12 @@ Pi yet. On the day you run it, count by hand, and fill in numbers.
 | Crowded or far-away people | `--profile crowd`: same model, full frame + 16 tiles (17 passes per frame). Majestic sample: 12 people in one pass, 25 with `accurate`, 58 with `crowd`. Adds a few false boxes on close-up traffic |
 | YOLO11s / 11m | not used unless the organisers say yes. `ensemble` uses s: comparison only |
 
+## Shortcut: everything measured on the Pi, one command
+```bash
+bash tools/pi_day.sh /path/to/clip.mp4 gate --every 3     # after install_pi.sh
+```
+Runs pi_check, parity (FP32 + INT8), keygen, run_all, thread sweep (INT8 and FP32), stamp verify, hand-count sheet; writes `out/pi_day/SUMMARY.md`. A failing step is recorded and the rest still run. Written and dry-run on a laptop, untested on a Pi. The accuracy number still needs a human to fill `handcount/handcount.csv`.
+
 ## 0. First 15 minutes (no building yet)
 - Ask a mentor: **what do the judges weigh?** **Is a live demo allowed in the 2 minutes?** **Are YOLO11s/m allowed?**
 - Get the clip onto the Pi. Note the Pi model and the OS.
