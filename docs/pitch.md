@@ -5,8 +5,8 @@ measured on the Pi. Each script is about 230 words: 1:45 at a normal pace, which
 
 ## Script A: gate (clip has people near a road)
 
-**0:00 Problem.** Every morning, children cross a busy road to reach a school gate. Whether that gate gets a
-traffic marshal usually depends on who complains, not on a count. [Check this line with a mentor or cite a source.]
+**0:00 Problem.** Children cross roads to reach school gates. Whether a gate gets a traffic marshal
+should depend on a count, so we built the counter.
 
 **0:20 What we built.** This Raspberry Pi counts people and vehicles from a camera view, fully
 offline, with a YOLO11n model on ExecuTorch. No cloud, no internet, and in deploy
@@ -24,12 +24,12 @@ RAM. That is our fast setting. It differs from our accurate setting by [N] peopl
 counts in our report come from the accurate one, at [N] ms per frame.
 
 **1:40 What it is for.** Leave this box at a gate for a week. The ward engineer gets one page:
-this gate needs a marshal from 8:30 to 8:50, or it does not. Same box, any gate, about [₹ price].
+this gate needs a marshal from 8:30 to 8:50, or it does not. Same box, any gate.
 
 ## Script B: junction (clip is mostly vehicles)
 
-**0:00 Problem.** A fixed signal timing is only right for the traffic it was set for, and traffic keeps changing.
-Re-timing needs a count, and a manual count costs a person a day. [Check this line with a mentor or cite a source.]
+**0:00 Problem.** A signal timing is only right for the traffic it was set for.
+Re-timing needs a count, and a count by hand costs a person a day, so we built the counter.
 
 **0:20 What we built.** This Raspberry Pi counts vehicles and people from a camera view, fully
 offline, with a YOLO11n model on ExecuTorch. No cloud, no internet, and in deploy
@@ -47,7 +47,7 @@ RAM. That is our fast setting. It differs from our accurate setting by [N] vehic
 counts in our report come from the accurate one, at [N] ms per frame.
 
 **1:40 What it is for.** Leave this box at an approach for a week. The traffic engineer gets one
-page: when the queue fills the road, and whether the green time should change. About [₹ price] per
+page: when the queue fills the road, and whether the green time should change. One box per
 approach, and no video ever leaves the pole.
 
 ## Questions to expect

@@ -47,4 +47,4 @@ Summary of `docs/SHIP_CHECK_REPORT.md` (the command-by-command results), checked
 `python tools/fill_docs.py --write --story=gate` (or `junction`), run on the Pi after the real run, fills the numeric
 blanks in `docs/submission.md` and `docs/pitch.md` from `deliverables/`, deletes the other script, and removes the
 accuracy lines when there is no `handcount/accuracy.md`. It refuses non-Pi or throttled runs. Left for a person:
-team names, the sourced opening line, the price, and the `[₹ price]` blank.
+team names, the hand count, and the timed read-aloud.
