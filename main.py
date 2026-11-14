@@ -6,7 +6,7 @@ small box-maths add-ons (congestion, crowd level, pedestrians on road, head blur
   python main.py --source clip.mp4 --zones zones.json --deploy   CSV only, no frames saved
   python main.py --source clip.mp4 --profile fast|accurate       one flag sets the whole recipe
 """
-import argparse, os, csv, itertools, json, platform, statistics, time
+import argparse, os, csv, itertools, json, platform, statistics, sys, time
 try:
     import resource
 except ImportError:          # Windows laptops
@@ -16,6 +16,11 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+for _st in (sys.stdout, sys.stderr):        # Windows consoles default to cp1252 and choke on the box-drawing rule
+    try:
+        _st.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 import insights, runner, stamp
 
 KEEP = ["person", "car", "bus", "truck", "motorcycle", "bicycle"]

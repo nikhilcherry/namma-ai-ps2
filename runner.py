@@ -40,8 +40,9 @@ def postprocess(cand, conf_person=0.30, conf_vehicle=0.30, iou=0.7, grouped=Fals
 
 def set_threads(n):
     """Ask ExecuTorch for n CPU threads. The documented call is C++ (_unsafe_reset_threadpool); whether this Python
-    build exposes it is unverified, so every known spelling is tried and the outcome is returned as text.
-    Untested on device. Fallback that always works: `taskset -c 0-<n-1> python main.py ...` (tools/thread_sweep.sh)."""
+    build exposes it varies, so every known spelling is tried and the outcome is returned as text.
+    Verified 14 Nov: the executorch 1.1.0 x86 Windows wheel exposes portable_lib._unsafe_reset_threadpool and it takes
+    effect (ExecuTorch logs 'Resetting threadpool to N threads'). The aarch64 Pi wheel is untested on device. Fallback that always works: `taskset -c 0-<n-1> python main.py ...` (tools/thread_sweep.sh)."""
     for modname in ("executorch.extension.pybindings.portable_lib", "executorch.extension.pybindings._portable_lib",
                     "executorch.extension.pybindings.pybindings", "executorch.extension.threadpool"):
         try:
