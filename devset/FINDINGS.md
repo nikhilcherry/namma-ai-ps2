@@ -153,3 +153,23 @@ Sum of |model - reference| vehicles, yolo11n FP32 640 full frame, grouped NMS 0.
 
 * At the same threshold group scoring is a little closer, but the best plain setting (lower the vehicle threshold to 0.15) beats the best group-score setting (17 vs 19). **Not adopted; the flag stays off.** Re-test on `devset/truth.csv` when it exists: a proxy is not truth.
 * Both still undercount at every threshold >= 0.20, consistent with the earlier finding that vehicle scores run lower than person scores.
+
+## Rectangular inputs (`tools/export_rect.py`, `tools/rect_eval.py`; 14 Nov, laptop, vs PROXY yolo11s + tiling)
+Exported yolo11n FP32 at 384x640 and 480x864 (`bundle/models/yolo11n_fp32_384x640.pte`, `..._480x864.pte`); `runner.py` reads H and W from the file. Windows export note: ExecuTorch needs `flatc`, which ships in the wheel (`executorch/data/bin/flatc.exe`); put its folder on PATH or set `FLATC_EXECUTABLE`.
+Sum of |model - reference| over the frames, single full-frame pass, conf 0.30, grouped NMS 0.5. ms are from THIS machine, for comparing rows only (not Pi numbers).
+
+| frames | model | people | vehicles | mean ms |
+|---|---|---|---|---|
+| wide only (>= 1.5, 14 frames; ref 43 p / 31 v) | 640x640 | 23 | 13 | 232 |
+| | 384x640 | 27 | 16 | 171 |
+| | 480x864 | **20** | **12** | 243 |
+| | 960x960 | 11 | 10 | 410 |
+| all 24 (ref 140 p / 78 v) | 640x640 | 73 | 32 | 239 |
+| | 384x640 | 83 | 42 | 173 |
+| | 480x864 | 67 | 34 | 232 |
+| | 960x960 | 34 | 24 | 406 |
+
+* **480x864 costs about the same as 640x640 and is slightly closer to the proxy on wide frames** (people 20 vs 23, vehicles 12 vs 13): a small gain on 14 frames, within noise. Candidate to replace 640 for 16:9 clips; decide on Pi timings.
+* **384x640 is about 26% faster and loses accuracy** (people +4, vehicles +3 on the wide frames). A speed option, not a free win; not adopted for the accurate profile.
+* 960x960 is still the most accurate at about 1.7x the time (matches the earlier 960 finding).
+* Sample is small, mixed aspect ratios, proxy reference. Repeat on the organiser's clip with `tools/rect_eval.py --frames <dir>`.
