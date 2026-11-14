@@ -174,3 +174,8 @@ Sum of |model - reference| over the frames, single full-frame pass, conf 0.30, g
 * 960x960 is still the most accurate at about 1.7x the time (matches the earlier 960 finding).
 * Sample is small, mixed aspect ratios, proxy reference. Repeat on the organiser's clip with `tools/rect_eval.py --frames <dir>`.
 * **Portrait `yolo11n_fp32_640x384.pte` (phone clips)**: three upright portrait crops of dev frames, 640x640 vs 640x384: c13 13 vs 8 people (crowd, loses 5), c00 2p 1v vs 2p 1v, c06 3p 2v vs 4p 2v; about 30% faster (e.g. 257 vs 171 ms on this machine). Same trade as 384x640: faster, loses people in crowds. A rotated landscape photo is not a valid test (people lie sideways, both found 0).
+
+## Sweep with the INT8 and 480x864 models (`devset/sweep_int8_rect.md`; 14 Nov, PROXY yolo11s + tiling, 8 check frames)
+* INT8 full frame at conf 0.15/0.15, NMS IoU 0.6 (grouped): MAE people 0.50, vehicles 0.12. FP32 `original`, same setting: 0.62 / 0.12. On this small proxy test INT8 is not worse than FP32; Arm's COCO figure says -0.4 mAP. Needs `truth.csv` to say more.
+* Winners agree across models: low thresholds (0.15 full frame), IoU 0.45-0.6. Same direction as the earlier sweep. Still PROXY: not adopted as defaults.
+* 480x864 full frame at 0.15/0.15 over-counts slightly against the proxy (+1.00 people, +0.88 vehicles); its tiled variant is closest (MAE 0.50 / 0.38). Proxy artefacts are likely at this sample size.
