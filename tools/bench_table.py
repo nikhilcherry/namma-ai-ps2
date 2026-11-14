@@ -5,6 +5,11 @@
 Writes out/benchmark.md. Count columns compare each model with the reference model on the
 same frames: mean absolute difference per frame (people, vehicles).
 """
+import sys
+try:                                   # Windows consoles default to cp1252 and fail on non-ASCII (delta, plus-minus, box rule)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 import argparse, csv, json, re
 from pathlib import Path
 

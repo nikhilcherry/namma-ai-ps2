@@ -9,6 +9,10 @@
 Count rule to tell the human counter: every person and every vehicle (car, bus, truck, auto,
 two-wheeler, bicycle) at least half visible. A rider on a two-wheeler is a person AND a vehicle.
 """
+try:                                   # Windows consoles default to cp1252 and fail on non-ASCII (delta, plus-minus, box rule)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 import argparse, csv, sys
 from pathlib import Path
 
