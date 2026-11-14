@@ -179,3 +179,18 @@ Sum of |model - reference| over the frames, single full-frame pass, conf 0.30, g
 * INT8 full frame at conf 0.15/0.15, NMS IoU 0.6 (grouped): MAE people 0.50, vehicles 0.12. FP32 `original`, same setting: 0.62 / 0.12. On this small proxy test INT8 is not worse than FP32; Arm's COCO figure says -0.4 mAP. Needs `truth.csv` to say more.
 * Winners agree across models: low thresholds (0.15 full frame), IoU 0.45-0.6. Same direction as the earlier sweep. Still PROXY: not adopted as defaults.
 * 480x864 full frame at 0.15/0.15 over-counts slightly against the proxy (+1.00 people, +0.88 vehicles); its tiled variant is closest (MAE 0.50 / 0.38). Proxy artefacts are likely at this sample size.
+
+## Correction: timing ratios for the rectangular models (`tools/bench_models.py`, 14 Nov, laptop)
+The ms columns in the two sections above came from one pass through the dev set and were noisy: the same 640x640 model measured about 240 ms there and 41 ms in a later run. `tools/bench_models.py` times every model on one frame in interleaved rounds (40 rounds, median), which cancels drift. Ratio to 640x640 FP32, same frame (768x432), all cores / 4 threads:
+
+| model | all cores | 4 threads |
+|---|---|---|
+| 640x640 FP32 | 1.00x | 1.00x |
+| 384x640 | **0.63x** | 0.59x |
+| 480x864 | 0.98x | 1.04x |
+| 960x960 | 1.92x | 2.21x |
+| 640x640 INT8 (Arm) | 1.11x | 1.14x |
+
+* 384x640 saves about 40% of the time (not 26%); 960 costs about 2x (not 1.7x); 480x864 costs the same as 640x640. The accuracy findings above are counts, not ms, and stand.
+* INT8 is slower than FP32 on this x86 laptop, as expected (Arm's INT8 kernels need an Arm CPU). It says nothing about the Pi, where Arm measured 1.26x faster for INT8.
+* Absolute ms here are laptop numbers. Only these ratios are usable; the Pi has to be measured.
