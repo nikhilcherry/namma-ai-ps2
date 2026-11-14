@@ -138,3 +138,18 @@ that a COCO detector undercounts dense crowds and that a crowd-trained YOLO11n i
 In the emulated ARM64 rehearsal the Arm INT8 model counted 4 people on `junction_01`; on the laptop it counts 5. Quantized
 kernels differ per architecture, so a borderline box can flip. `tests/test_samples_golden.py` is therefore x86-only. Expect
 Pi counts to differ from laptop counts by about one per frame on INT8; only Pi counts go in the submission.
+
+## Group scoring for vehicles (`--group-score`, `tools/group_eval.py`; 14 Nov, laptop, vs PROXY yolo11s + tiling, 24 frames, 78 reference vehicles)
+Idea: sum car+bus+truck (and bicycle+motorcycle) scores per anchor before the threshold, so an auto-rickshaw scoring car 0.20 / truck 0.18 is kept.
+Sum of |model - reference| vehicles, yolo11n FP32 640 full frame, grouped NMS 0.5:
+
+| vehicle threshold | plain | group-score |
+|---|---|---|
+| 0.15 | **17** (bias -13) | 19 (bias -7) |
+| 0.20 | 24 | 22 |
+| 0.25 | 31 | 29 |
+| 0.30 | 32 | 30 |
+| 0.40 | 46 | 39 |
+
+* At the same threshold group scoring is a little closer, but the best plain setting (lower the vehicle threshold to 0.15) beats the best group-score setting (17 vs 19). **Not adopted; the flag stays off.** Re-test on `devset/truth.csv` when it exists: a proxy is not truth.
+* Both still undercount at every threshold >= 0.20, consistent with the earlier finding that vehicle scores run lower than person scores.
