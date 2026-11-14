@@ -125,3 +125,26 @@ All five test files in `tests/` pass on `origin/master` (`21fef4f`), run with th
 3. Fill every `[N]` and `[names]` from the new `deliverables/` files. Delete the unused pitch script.
 4. Commit and push `deliverables/`.
 5. A person does the timed read, the private-window check, and the form.
+
+## Rehearsal re-run (14 Nov, afternoon): stand-in photos, NOT a submission
+
+A clean checkout of `origin/master` (`d3e3f1b`) was run end to end with `bash run_all.sh img/raw gate --every 1` on the same Pi 5, into a separate folder, so the existing `deliverables/` was not touched. The input is still the 14 Wikimedia stand-in photos, so blockers 2 to 4 above are unchanged. It tests the pipeline and the timings only.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Pipeline runs end to end on current `master` | PASS | all 4 models plus `fast` and `accurate` profiles finished, no `!!` failure line, 79 s total |
+| Counts reproduce | PASS | `people_total` 64 and `vehicle_total` 43, same as the 11:15 run |
+| `stamp.py verify` | PASS | `OK: 14 rows ... unsigned (chain only)` |
+| Main run flagged throttled | PASS | `"throttled_during_run": false` |
+| Whole session unthrottled | FAIL | `vcgencmd get_throttled` read `0xe0000` afterwards, so frequency capping, throttling and the soft temperature limit happened since boot. Governor is still `ondemand`. |
+
+Timings from this rehearsal (14 frames):
+
+| Model | Mean ms | Earlier run | Arm reference |
+|---|---|---|---|
+| INT8 640 | 143.7 | 148.1 | about 134 |
+| FP32 640 | 181.8 | 186.8 | about 169 |
+| FP32 480 | 116.4 | 80.9 | none |
+| FP32 960 | 544.1 | 382.0 | none |
+
+INT8 and FP32 640 are 7 to 8% above Arm's figures. FP32 480 and 960 are 44% and 42% slower than the earlier run, and the `fast` profile's p95 rose from 154.8 to 192.0 ms. That scatter points to heat. The board was at 75 C during the 960 run. Use these numbers for nothing: set the performance governor, cool the board, and re-run on the organisers' media.
