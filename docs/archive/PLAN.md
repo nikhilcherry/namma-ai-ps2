@@ -111,4 +111,4 @@ Tracking, direction/dwell, any second model, cloud, live camera, dashboards, LoR
 - Failure found: `test_samples_golden` pins x86 INT8 counts; on ARM64 one borderline box flips (brigade_03 12 vs 13 people, junction_01 4/11 vs 5/10). Not a pipeline bug. Fixed in `b622b7d` (the test runs on x86 only); pass 3 ran after it.
 - An earlier attempt at pass 3 printed nothing (the filtered output hid the cause); it was re-run unfiltered and passed.
 - Python 3.12 was not rehearsed. Timings under QEMU mean nothing and are not recorded here.
-- Counts on two sample photos, people found: 16 (640 FP32), 14 (640 INT8), 9 (480), 30 (960). See `EFFICIENCY_PLAN.md`.
+- Counts on two sample photos, people found: 16 (640 FP32), 14 (640 INT8), 9 (480), 30 (960). See `EFFICIENCY_PLAN.md` (same folder).

@@ -25,6 +25,8 @@ problems = []
 if "Raspberry" not in s["board"] and not force: problems.append(f"board is '{s['board']}', not a Pi")
 if s.get("throttled_during_run") and not force: problems.append("run was throttled")
 if "yolo11n" not in s["model"] and not force: problems.append("main model is not yolo11n")
+if s["profile"] != "accurate" and not force:
+    problems.append(f"deliverables come from profile '{s['profile']}', but submission.md says the counts are from the accurate profile")
 if problems:
     sys.exit("REFUSING: " + "; ".join(problems) + "  (use --force to preview anyway)")
 
@@ -43,13 +45,14 @@ sub = D.parent / "docs" / "submission.md"
 t = sub.read_text()
 t = sub_once(t, r"\[N\]", [str(s["frames"]), str(s["people_total"]), str(s["vehicle_total"]),
                           str(peak["person"]), str(peak["vehicle"]),
-                          f["mean"], f["med"], f["p95"], f["fps"], f["fps"], f["ram"]] if f else [])
+                          f["mean"], f["med"], f["p95"], f"{1000 / float(f['mean']):.2f}", f["fps"], f["ram"]]   # profiles.md has end-to-end FPS only
+                         + ([a["mean"]] if a else []) if f else [])
 t = t.replace("[Pi model, RAM, OS]", board)
+if story in ("gate", "junction"):   # keep this story's sentence, drop the other one
+    t = re.sub(r"\[(gate|junction): ([^\]]*)\](?:\s*/\s*)?", lambda m: m.group(2) if m.group(1) == story else "", t)
 print("submission.md remaining blanks:", re.findall(r"\[[^\]]*\]", t))
 if write: sub.write_text(t)
 print(("WROTE" if write else "dry run:"), "submission.md; frames", s["frames"], "profile", s["profile"])
-if a and s["profile"] != "accurate":
-    print("WARNING: submission.md says counts come from the accurate profile; summary.json used", s["profile"])
 print("pitch.md: fill by hand from the same files (script differs per story); blanks left:",
       len(re.findall(r"\[N\]|\[Pi model\]|\[10\]", (R / "docs/pitch.md").read_text())))
 

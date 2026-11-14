@@ -53,7 +53,7 @@ approach, and no video ever leaves the pole.
 ## Questions to expect
 | Question | Answer |
 |---|---|
-| Is this unique people? | No. Counts per frame. Unique counts need tracking, which we left out on purpose. |
+| Is this unique people? | No. The submitted counts are per frame. `--track` gives unique and in/out counts by box overlap only, which over-counts in crowds, so we call those upper estimates and keep them out of the submission. |
 | Why not a bigger model? | Measured: [fill from benchmark]. Nano gives [N] FPS on this board. |
 | Did you train it? | No. Pretrained COCO YOLO11n; INT8 and FP32 exports from Arm, 320/480 exports are ours. |
 | What about autos? | No auto class in COCO. They land in car or truck, so the merged vehicle count is the honest one. |

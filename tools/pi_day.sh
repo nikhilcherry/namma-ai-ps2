@@ -15,7 +15,7 @@ cd "$(dirname "$0")/.."
 SRC="${1:?usage: bash tools/pi_day.sh <clip or folder> [gate|junction] [main.py args]}"; shift
 STORY="gate"; case "${1:-}" in gate|junction) STORY="$1"; shift;; esac
 PY="${PY:-python}"; [ -x .venv-pi/bin/python ] && PY=.venv-pi/bin/python; export PY
-MAIN="${MAIN_MODEL:-yolo11n_raspberry_executorch_optimized}"
+MAIN="${MAIN_MODEL:-profile_accurate}"
 D=out/pi_day; mkdir -p "$D"
 INT8=bundle/models/yolo11n_raspberry_executorch_optimized.pte
 FP32=bundle/models/yolo11n_raspberry_executorch_original.pte

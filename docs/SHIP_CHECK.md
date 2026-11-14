@@ -59,7 +59,7 @@ Everything else depends on this. If either box fails, stop and run
 ## 6. It is actually submitted
 
 - [ ] `docs/submission.md` has no blanks: `grep -c '\[N\]\|\[names\]\|\[Pi model' docs/submission.md` → `0`.
-- [ ] Team names are in `docs/submission.md` and `PLAN.md`.
+- [ ] Team names are in `docs/submission.md` and `docs/archive/PLAN.md`.
 - [ ] `deliverables/` is committed and pushed.
   `git status --short deliverables` → empty, and `git log origin/master -1 -- deliverables` shows today's commit.
 - [ ] `git status -sb` → not ahead of and not behind `origin/master`. (A second agent pushes too: `git pull --rebase` before every push.)

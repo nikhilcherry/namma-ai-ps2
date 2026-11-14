@@ -34,10 +34,10 @@ python tools/handcount.py table --run out/<model>                      # model v
 python tools/live.py                               # phone takes a photo, the Pi counts it (LAN only)
 python stamp.py verify out/<model>                 # re-check the CSV against its hash chain
 python stamp.py keygen                             # once per device: creates .stamp_key (never commit); runs are then signed (HMAC)
-python tools/parity.py                             # runner.py vs Arm's reference output (untested on device)
+python tools/parity.py                             # runner.py vs Arm's reference output
 python tools/check_occupancy.py                    # low-res occupancy vs full-res (max diff 0.007 measured on random frames)
 python main.py --source folder/ --repeat 10        # image folder: 10 timing passes, counts written once
-# summary.json also records Pi temperature and throttle state before and after a run (untested on device)
+# summary.json also records Pi temperature and throttle state before and after a run
 python main.py --source clip.mp4 --deploy          # CSV only: no frames are written at all
 ```
 
@@ -83,7 +83,7 @@ Pretrained COCO weights, no training by us. Runtime: ExecuTorch 1.1.0, XNNPACK b
 
 Models are AGPL-3.0 (Ultralytics / Arm). Sample photos: Wikimedia Commons, credits in `img/raw/meta.json`.
 
-## Profiles, flags and tools added by the efficiency pass (see EFFICIENCY_PLAN.md, devset/FINDINGS.md)
+## Profiles, flags and tools added by the efficiency pass (see docs/archive/EFFICIENCY_PLAN.md, devset/FINDINGS.md)
 
 | `--profile` | recipe | ms/frame on the **laptop** (not a Pi) |
 |---|---|---|
@@ -103,4 +103,6 @@ Counts per recipe are measured against a *proxy* reference until `devset/truth.c
 
 Tools: `tools/sweep.py` (threshold/NMS sweep), `tools/hybrid_eval.py` (recipe comparison), `tools/quantize.py` (own INT8, `--fp32-head`),
 `tools/bench_hygiene.py` (>=100 frames, two runs, throttle flag), `tools/pi_check.sh` (board readiness), `tools/profile_diff.py`, `tools/devset_init.py`.
-Tests: `python tests/test_postprocess.py` and `python tests/test_samples_golden.py` (or `pytest tests`).
+Tests: `pytest tests` (CI runs them on every push).
+
+More: `docs/DAY.md` (runbook), `docs/SHIP_CHECK.md` (submission checklist), `devset/FINDINGS.md` (measurements), `docs/archive/` (the original plans).

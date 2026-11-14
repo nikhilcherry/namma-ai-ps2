@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 SRC="${1:?usage: bash run_all.sh <clip or folder> [gate|junction] [main.py args]}"; shift
 STORY="gate"; case "${1:-}" in gate|junction) STORY="$1"; shift;; esac
 PY="${PY:-python}"; [ -x .venv-pi/bin/python ] && PY=.venv-pi/bin/python
-MAIN="${MAIN_MODEL:-yolo11n_raspberry_executorch_optimized}"      # the model the report and samples come from
+MAIN="${MAIN_MODEL:-profile_accurate}"      # the run the report, samples and deliverables come from (docs/submission.md says: accurate)
 OUT="${OUT:-out}"
 
 FAILED=""
@@ -25,7 +25,7 @@ for pte in bundle/models/*.pte; do
   echo "(wall time for $name: $((SECONDS - T0)) s)"
 done
 
-# The two profiles of EFFICIENCY_PLAN.md, run on the same clip: fast = the FPS figure, accurate = the submitted counts.
+# The two profiles of docs/archive/EFFICIENCY_PLAN.md, run on the same clip: fast = the FPS figure, accurate = the submitted counts.
 for prof in fast accurate; do
   echo; echo "=== profile: $prof ==="
   $PY main.py --source "$SRC" --profile $prof --out "$OUT/profile_$prof" "$@" || echo "!! profile $prof failed"
@@ -40,7 +40,7 @@ echo; $PY tools/bench_table.py "$OUT" $FILL
 $PY tools/report.py "$OUT/$MAIN" --story "$STORY" ${SITE:+--site "$SITE"} || echo "!! report failed (not a deliverable)"
 $PY stamp.py verify "$OUT/$MAIN"
 
-D=deliverables; mkdir -p "$D"
+D=deliverables; mkdir -p "$D"; rm -f "$D"/sample_*.jpg      # samples of an earlier run must not sit next to this run's CSV
 cp "$OUT/benchmark.md" "$D/"; cp "$OUT/profiles.md" "$D/" 2>/dev/null || true
 cp "$OUT/$MAIN/counts.csv" "$OUT/$MAIN/summary.txt" "$OUT/$MAIN/summary.json" "$OUT/$MAIN/stamp.json" "$D/"
 cp "$OUT/$MAIN"/report.* "$OUT/$MAIN/heatmap.jpg" "$D/" 2>/dev/null || true

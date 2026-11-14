@@ -1,7 +1,7 @@
-# Day runbook (14 Nov): the only file you need tomorrow
+# Day runbook (14 Nov): the only file you need
 
-Everything here is built and was run on the laptop and on emulated ARM64. Nothing has run on a real
-Pi yet. On the day you run it, count by hand, and fill in numbers.
+Everything here has been run on the Raspberry Pi 5. What is left: the organisers' media, a cool
+unthrottled run, the hand count, and the numbers in the docs.
 
 ## Decisions already made (change only with a reason)
 | Question | Answer |
@@ -17,7 +17,7 @@ Pi yet. On the day you run it, count by hand, and fill in numbers.
 ```bash
 bash tools/pi_day.sh /path/to/clip.mp4 gate --every 3     # after install_pi.sh
 ```
-Runs pi_check, parity (FP32 + INT8), keygen, run_all, thread sweep (INT8 and FP32), stamp verify, hand-count sheet; writes `out/pi_day/SUMMARY.md`. A failing step is recorded and the rest still run. Written and dry-run on a laptop, untested on a Pi. The accuracy number still needs a human to fill `handcount/handcount.csv`.
+Runs pi_check, parity (FP32 + INT8), keygen, run_all, thread sweep (INT8 and FP32), stamp verify, hand-count sheet; writes `out/pi_day/SUMMARY.md`. A failing step is recorded and the rest still run. The accuracy number still needs a human to fill `handcount/handcount.csv`.
 
 ## 0. First 15 minutes (no building yet)
 - Ask a mentor: **what do the judges weigh?** **Is a live demo allowed in the 2 minutes?** **Are YOLO11s/m allowed?**
@@ -52,8 +52,9 @@ On a Pi 4 there is no reference; INT8 may be slower than FP32 or fail, and the s
 ## 3. GATE: save, push, submit
 ```bash
 git add -A && git commit -m "Pi run: counts, benchmark, samples" && git push
-gh repo edit nikhilcherry/namma-ai-ps2 --visibility public --accept-visibility-change-consequences
+python tools/fill_docs.py --write --story=gate      # or junction: fills the blanks in docs/submission.md and docs/pitch.md
 ```
+The repo is already public.
 Submit the form now with what you have (`docs/submission.md`). Update it later if the form allows.
 Nothing else gets built until this is done.
 
@@ -69,7 +70,7 @@ Without a zone the report says "Provisional" on its verdict. That is correct, le
 
 ## 6. Final run: outputs from the accurate profile
 ```bash
-MAIN_MODEL=profile_accurate bash run_all.sh /path/to/clip.mp4 gate --every N --zones zones.json
+bash run_all.sh /path/to/clip.mp4 gate --every N --zones zones.json      # outputs come from profile_accurate by default
 ```
 `MAIN_MODEL` decides where the report, the two sample frames and `deliverables/` come from.
 **Look at the boxes before choosing.** If people in the clip are small, far away or packed together and
@@ -108,7 +109,7 @@ Fill the blanks in `docs/pitch.md` and `docs/submission.md`.
 |---|---|---|
 | Live photo from a phone | `python tools/live.py` → open the printed URL | only if a mentor said a demo is allowed; phone and Pi on one hotspot; never tested with a real phone |
 | Stronger benchmark | `python tools/bench_hygiene.py --frames <folder of frames> --all` | two runs per model, flags throttling |
-| Thread count | `bash tools/thread_sweep.sh <clip>` | if `pi_check.sh` shows fewer threads than cores; untested on a device |
+| Thread count | `bash tools/thread_sweep.sh <clip>` | if `pi_check.sh` shows fewer threads than cores |
 | Signed results | `python stamp.py keygen` before a run | only if a judge cares about tamper evidence |
 
 ## 10. Final push
@@ -121,7 +122,7 @@ Stop building 45 minutes before judging. Rehearse the pitch twice, timed.
 | Problem | Do |
 |---|---|
 | INT8 model fails or is slower than FP32 (Pi 4) | nothing: the script skips failed models and uses FP32. Say so in the pitch |
-| A profile fails | the four model runs still give every deliverable; drop `MAIN_MODEL` |
+| A profile fails | the four model runs still give every deliverable: the script falls back to the FP32 640 run by itself (then fix the "accurate profile" line in `docs/submission.md`) |
 | Runs are too slow | raise `--every`; restrict with `MODELS="yolo11n_raspberry_executorch_optimized yolo11n_raspberry_executorch_original"` |
 | An add-on number looks wrong | add `--no-addons`, do not debug |
 | Report or PDF fails | not a deliverable; open `report.html` on the laptop and print to PDF |

@@ -32,7 +32,7 @@ Defaults were NOT changed from the proxy sweep (conf 0.30/0.30, IoU 0.70 kept). 
 because the reference is more permissive; that is circular. Run `python tools/sweep.py` as soon as `devset/truth.csv` exists.
 
 ## Open
-* T1 (human counts, rule is in EFFICIENCY_PLAN.md) unlocks the sweep.
+* T1 (human counts, rule is in docs/archive/EFFICIENCY_PLAN.md) unlocks the sweep.
 * T9 (INT8 at 480) not attempted: 480 already loses counts and the plan ranks it last.
 * Everything in section 4 of the plan needs the Pi.
 * `bundle/models/yolo11m_fp32_640.pte` is 80 MB (GitHub warns above 50 MB); s is 38 MB.
