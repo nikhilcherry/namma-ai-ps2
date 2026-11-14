@@ -1,0 +1,22 @@
+{
+ "area": "banashankari-test",
+ "site": "Banashankari, Bengaluru (Wikimedia clip, 8 s, test only)",
+ "url": "https://nikhilcherry.github.io/namma-ai-ps2/r/banashankari-test/",
+ "board": "x86_64 (not a Pi)",
+ "model": "yolo11n_raspberry_executorch_optimized.pte",
+ "frames": 119,
+ "people_total": 459,
+ "vehicle_total": 1568,
+ "mean_ms": 37.8,
+ "fps_infer": 26.48,
+ "crossing_check": {
+  "verdict": "Provisional: Controlled crossing warranted: traffic signal with a pedestrian phase",
+  "P_per_h": 454,
+  "V_per_h": 2268,
+  "PV2": 2333073665.61366,
+  "basis": "screening only: 8 s scaled to an hour (the rule needs peak-hour counts)",
+  "wait_los": null
+ },
+ "stamp_head": "c076a2467ab3a8537eb27f06a15e7321eb43ded4e03ecd8ea137f39d1d535425",
+ "signed": false
+}

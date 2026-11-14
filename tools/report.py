@@ -19,6 +19,8 @@ ap.add_argument("--story", choices=["gate", "junction"], default="gate")
 ap.add_argument("--site", default="")
 ap.add_argument("--handcount", default="handcount/accuracy.md")
 ap.add_argument("--repo", default="github.com/nikhilcherry/namma-ai-ps2")
+ap.add_argument("--out", help="HTML path (default <run>/report.html); the PDF goes next to it")
+ap.add_argument("--no-images", action="store_true", help="numbers only, no frames (public pages: tools/publish.py)")
 a = ap.parse_args()
 run = Path(a.run)
 with open(run / "counts.csv") as f:
@@ -110,6 +112,8 @@ if is_video and len(sizes) == 1 and pf.exists():       # one fixed view: where p
         cv2.imwrite(str(run / "heatmap.jpg"), hm)
         figs.append((b64(hm), "Where people stood: foot points of every person box over the clip."))
 
+if a.no_images:
+    figs = []
 acc_html = ""
 hp = Path(a.handcount)
 if hp.exists():
@@ -161,12 +165,14 @@ figcaption, .n {{ color: #666; font-size: 8.5pt; }} ul {{ margin: 2pt 0; padding
 <h2>What this is for</h2><p>{use}</p>
 <p class="n">Code and raw outputs: {a.repo} · results are hash-chained (stamp.json), head {json.loads((run / 'stamp.json').read_text())['head'][:16]}…</p>
 </body></html>"""
-(run / "report.html").write_text(html, encoding="utf-8")
-print(f"wrote {run / 'report.html'}  verdict: {verdict}")
+OUT = Path(a.out) if a.out else run / "report.html"
+OUT.parent.mkdir(parents=True, exist_ok=True)
+OUT.write_text(html, encoding="utf-8")
+print(f"wrote {OUT}  verdict: {verdict}")
 try:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import hk_pdf
-    hk_pdf.from_html(html, run / "report.pdf")
-    print(f"wrote {run / 'report.pdf'}")
+    hk_pdf.from_html(html, OUT.with_suffix(".pdf"))
+    print(f"wrote {OUT.with_suffix('.pdf')}")
 except Exception as e:      # no browser on the Pi: open report.html on any laptop and print to PDF
     print(f"PDF skipped ({str(e)[:80]}); open report.html in a browser and print to PDF")
