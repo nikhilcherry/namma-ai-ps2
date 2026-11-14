@@ -26,9 +26,6 @@ The submitted counts come from the accurate profile (YOLO11n FP32 640, full fram
 **Model used:** YOLO11n (Ultralytics, COCO pretrained), ExecuTorch `.pte`, XNNPACK backend, CPU only.
 INT8 and FP32 640 exports from Arm; FP32 480 and 320 exported by us.
 
-**Accuracy:** hand count of [10] frames from the organiser's clip: the model found [N]% of people and
-[N]% of vehicles; within ±2 of the human count on [N] of [10] frames.
-
 **Societal issue (deliverable 5):** [gate: decisions about where to post traffic marshals at school
 gates are made from complaints, not counts] / [junction: signal timings are set once and not
 revisited because manual counts are costly].
