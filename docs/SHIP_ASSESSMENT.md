@@ -41,3 +41,10 @@ Summary of `docs/SHIP_CHECK_REPORT.md` (the command-by-command results), checked
 6. Hand count 10 frames, or remove the accuracy lines.
 7. Commit and push `deliverables/`.
 8. A person times the pitch, checks the repo in a private window, and submits the form. Record who and when.
+
+## Helper added after this assessment
+
+`python tools/fill_docs.py --write --story=gate` (or `junction`), run on the Pi after the real run, fills the numeric
+blanks in `docs/submission.md` and `docs/pitch.md` from `deliverables/`, deletes the other script, and removes the
+accuracy lines when there is no `handcount/accuracy.md`. It refuses non-Pi or throttled runs. Left for a person:
+team names, the sourced opening line, the price, and the `[₹ price]` blank.
